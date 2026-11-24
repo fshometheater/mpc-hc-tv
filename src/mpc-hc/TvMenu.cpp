@@ -3225,7 +3225,7 @@ std::vector<CTvMenu::KeyBinding> CTvMenu::KeyBindings(int action)
     if (const int hold = HoldCommand(action)) {
         for (const auto& kv : HoldMap()) {
             if (kv.second == hold) {
-                v.push_back({ 2, kv.first, -1, L"hold " + VirtualKeyName(kv.first) });
+                v.push_back({ 2, kv.first, -1, L"Hold " + VirtualKeyName(kv.first) });
             }
         }
     }
@@ -7710,11 +7710,20 @@ void CTvMenu::RenderPanel()
                 const int w = TextWidth(hdc, fontRow, names[k]) + padX * 2;
                 const RECT rp = { x - w, static_cast<LONG>(cy - pillH / 2.0f), x, static_cast<LONG>(cy + pillH / 2.0f) };
                 const bool picked = (k == pickedIdx);
-                const COLORREF fill = picked ? kTextColor : Mix(kFocusColor, kTextColor, 0.2f);
-                canvas.FillRoundPolyAA({ { static_cast<float>(rp.left), static_cast<float>(rp.top) }, { static_cast<float>(rp.right), static_cast<float>(rp.top) },
-                                         { static_cast<float>(rp.right), static_cast<float>(rp.bottom) }, { static_cast<float>(rp.left), static_cast<float>(rp.bottom) } },
-                                       pillH / 2.0f, fill);
-                DrawLine(hdc, fontRow, picked ? kFocusColor : kTextColor, names[k], rp, DT_CENTER);
+                // the picked one as a chip like the madVR values (panel colour over the highlight);
+                // Edit: the keys in red, the picked one on a red chip (OK takes it off)
+                const COLORREF rowBg = focused ? kFocusColor : kPanelColor;
+                const COLORREF kRemoveColor = RGB(196, 48, 52);
+                if (picked) {
+                    const COLORREF fill = tags ? Mix(rowBg, kRemoveColor, 0.85f) : Mix(rowBg, kPanelColor, 0.3f);
+                    canvas.FillRoundPolyAA({ { static_cast<float>(rp.left), static_cast<float>(rp.top) }, { static_cast<float>(rp.right), static_cast<float>(rp.top) },
+                                             { static_cast<float>(rp.right), static_cast<float>(rp.bottom) }, { static_cast<float>(rp.left), static_cast<float>(rp.bottom) } },
+                                           pillH * 0.35f, fill);
+                }
+                const COLORREF ink = picked ? kTextColor
+                                     : tags ? Mix(RGB(255, 150, 150), rowBg, 0.15f)
+                                            : (focused ? kFocusDimTextColor : kDimTextColor);
+                DrawLine(hdc, fontRow, ink, names[k], rp, DT_CENTER);
                 pillLeft = rp.left;
                 x = rp.left - gapX;
             }

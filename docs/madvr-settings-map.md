@@ -1,4 +1,6 @@
-# madVR settings map (madVR 0.92.17 beta)
+# madVR settings map (madVR 0.92.17 test build 210)
+
+IDs as madVR 0.92.17 test build 210 reports them ([download](https://madshi.net/madVRhdrMeasure210.zip), [announcement](https://www.avsforum.com/posts/64465710/)); the standard 0.92.17 release may differ. To list them for another build, set `MPCHC_TV_MADVR_DUMP=<file>` and open the TV madVR panel.
 
 Found with madVR's own settings enumeration (`IMadVRSettings2`, read-only tool) plus the definition
 records in `mvrSettings64.dll` (`<type\id\label\help\default\range-or-list\...>`) and the dropdown item

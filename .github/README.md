@@ -72,6 +72,8 @@ and web interface are unchanged.
   on / off and a value keep both on one row.
 - **LAV pages**: bitstreaming, DRC, output formats, hardware decoding, RGB levels, deinterlacing.
 
+![madVR HDR settings](../docs/screenshots/madvr-hdr.png)
+
 ### TV options
 - **Look**: accent colour (presets or custom), background colour, menu and bar opacity, icon
   brightness, menu and bar size, font, animation speed (Off to Slowest).

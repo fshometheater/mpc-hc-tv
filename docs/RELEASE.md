@@ -217,6 +217,8 @@ display stays at a high refresh rate (e.g. 120 Hz) during playback.
 
 - **Installer**: normal MPC-HC setup plus the TV option box (section 6). The box is ticked by default,
   upgrades included: untick it when upgrading to keep your current settings (a silent install applies it).
+- **Windows SmartScreen** may warn on the first start (the files are unsigned, like MPC-HC's): More
+  info > Run anyway. The release notes list each file's SHA-256 (`Get-FileHash <file>` to compare).
 - **Zip / portable**: unpack, run `mpc-hc64.exe`. Turn TV mode on once with View > TV Mode or View >
   Presets > TV; it stays on. Nothing else is changed automatically.
 - **madVR is not included.** Install it separately and pick it in Options > Playback > Output (or add
@@ -340,6 +342,15 @@ with no recent file (or history off) it opens File > Quick Open.
    installer + portable zip each (the zip has upstream's files minus CrashReporter), with SHA-256.
 4. Tag `tv-mode` as `<mpc>-tv-<tv>` (e.g. `2.8.5-tv-0.1.0`), push the tag, and
    `gh release create <tag> --draft --prerelease --verify-tag` with the four files; publish on GitHub.
+5. The release notes end with the unsigned / SmartScreen note and a SHA-256 table of the four files
+   (the values `make-release.ps1` prints; GitHub's own digest of each uploaded file must match them).
+
+**Unsigned builds:** neither MPC-HC nor this fork is code-signed (upstream's installer, `mpc-hc64.exe`,
+LAV Filters and MPC Video Renderer are unsigned too; only MediaInfo.dll and Microsoft's DLLs carry
+signatures), so Windows SmartScreen warns on the first start of a new download ("Windows protected your
+PC" > More info > Run anyway). Signing would need a certificate (for example SignPath Foundation's free
+signing for open-source projects, or Azure Trusted Signing), and even then a new publisher builds trust
+over time.
 
 **Note for Emby / Jellyfin / Plex users:** "remember file position" makes MPC-HC resume files itself.
 If your media server handles resume (it passes the start position to the player), untick the box or

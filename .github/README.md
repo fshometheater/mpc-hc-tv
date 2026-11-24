@@ -124,6 +124,11 @@ and web interface are unchanged.
 5. With no file loaded, a click on the player opens the last file from the recent files (a file picker
    if there is none).
 
+> **Windows SmartScreen:** the installer and the player are not code-signed (neither is MPC-HC itself),
+> so the first start may show "Windows protected your PC". Click **More info**, then **Run anyway**. Each
+> release lists the SHA-256 of its files; to check a download, run `Get-FileHash <file>` in PowerShell
+> and compare.
+
 madVR is not included; install it the usual way and select it under Options > Playback > Output. For
 the madVR pages use **madVR 0.92.17 test build 210**
 ([download](https://madshi.net/madVRhdrMeasure210.zip),

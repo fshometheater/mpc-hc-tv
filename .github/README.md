@@ -76,7 +76,7 @@ and web interface are unchanged.
   renderer, "Restart playback to apply" reopens the file at the same place with the same tracks.
 - **madVR panel**: picture (HDR, scaling refinement, smooth motion, trade quality for performance),
   display (calibration, display modes, frame rate matching) and tools, edited live with a mini view so
-  the picture stays visible. **Every change applies at once**: there's no Apply button like in madVR's own
+  the picture stays visible. **Every change applies instantly**: there's no Apply button like in madVR's own
   settings window, the picture updates while you change a value. On / off options are switches (OK or a
   click flips them); options with an on / off and a value keep both on one row.
 - **LAV pages**: bitstreaming, DRC, output formats, hardware decoding, RGB levels, deinterlacing.
@@ -90,7 +90,7 @@ and web interface are unchanged.
 <p align="center">
   <img src="../docs/screenshots/madvr-mini-view.png" alt="madVR mini view over the film" width="100%">
   <br>
-  <sub>Mini view: one setting at a time over the picture. Up / Down change it and the picture follows at once.</sub>
+  <sub>Mini view: one setting at a time over the picture. Up / Down change it and the picture follows instantly.</sub>
 </p>
 <p align="center">
   <img src="../docs/screenshots/video-page.png" alt="Video page" width="60%">

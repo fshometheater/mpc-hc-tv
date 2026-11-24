@@ -255,7 +255,7 @@ Name: desktopicon\common; Description: {cm:tsk_AllUsers};          GroupDescript
 Name: quicklaunchicon;    Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked;             OnlyBelowVersion: 6.01
 Name: reset_settings;     Description: {cm:tsk_ResetSettings};     GroupDescription: {cm:tsk_Other};       Flags: checkedonce unchecked; Check: SettingsExist()
 ; TV MODE: "Recommended TV settings" (TV Mode with caption and menu, fullscreen, history and positions remembered,
-; TV subtitle style). Ticked by default, also where player settings already exist;
+; resume the last unfinished file on start, TV subtitle style). Ticked by default, also where player settings already exist;
 ; both labels say that some settings are overridden to work best with TV Mode.
 Name: tv_recommended;          Description: "Apply recommended TV settings (overrides some player settings to work best with TV Mode)";       GroupDescription: "TV Mode:"; Check: not SettingsExist()
 Name: tv_recommended_existing; Description: "Apply recommended TV settings (overrides some of your current settings to work best with TV Mode)"; GroupDescription: "TV Mode:"; Check: SettingsExist()

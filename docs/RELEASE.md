@@ -276,12 +276,23 @@ already exist it reads "(overrides some of your current settings to work best wi
   40 % opacity, no shadow, 20 from the bottom). The 60 % is deliberate: full white is too bright on projectors and
   HDR displays. Users who want it brighter raise Subtitles > Style > Text opacity.
 - TV Mode on, with the TV layout (caption and menu bar, no toolbars).
+- TV option Control bar > **Resume the last file on start** on (off without the installer).
 
 View > Presets also has **TV** (key 5: TV Mode with caption and menu) and **TV Minimal** (key 6: TV
 Mode, borderless like Minimal). Plain 5 and 6 were unused in MPC-HC's key list. The TV Settings panel
 ends with **Exit** (closes the player, as File > Exit) under "Switch to Desktop Mode". In TV Mode with no
 file loaded, a click on the empty player (the logo) opens the last file from MPC-HC's recent files;
 with no recent file (or history off) it opens File > Quick Open.
+
+- **Resume the last file on start** (TV option, Control bar): when the player starts in TV Mode with
+  nothing to play (no file, disc or device on the command line, no `/slave` or `/add`, no other player
+  window open), it opens the most recent file of MPC-HC's recent files, but only if MPC-HC kept a
+  position for it. MPC-HC forgets the position when a file plays to the end, keeps none with "remember
+  file position" off, and keeps none for files shorter than Options > Player > History > "Remember
+  position for files longer than" (5 minutes by default). So a finished film leaves the player on the
+  logo; an unfinished one carries on where it stopped. A media server starting the player with its own
+  file is never affected. The stream address of a media server counts as a recent file too, so a film
+  stopped part-way in Emby resumes through that address (outside Emby's own tracking).
 
 - **Back with nothing open** (Esc, Backspace, Browser Back or the extra Back key): TV option Control bar
   > "Back with nothing open": **Opens the power menu** (default; Exit, Enter / Exit fullscreen, Restart

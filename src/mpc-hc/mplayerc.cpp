@@ -35,6 +35,7 @@
 #include "PPageSheet.h"
 #include "PathUtils.h"
 #include "RedirectWaitDlg.h"
+#include "TvMode.h" // TV MODE
 #include "Struct.h"
 #include "UpdateChecker.h"
 #include "WebServer.h"
@@ -2506,7 +2507,11 @@ BOOL CMPlayerCApp::InitInstance()
         return FALSE;
     }
 
+    const bool tvStartsEmpty = CTvMode::StartsWithoutMedia(*m_s); // TV MODE: asked before the command line is used
     SendCommandLine(m_pMainWnd->m_hWnd);
+    if (tvStartsEmpty) {
+        CTvMode::ResumeAtStart(static_cast<CMainFrame*>(m_pMainWnd)); // TV MODE: "Resume the last file on start"
+    }
     RegisterHotkeys();
 
     // set HIGH I/O Priority for better playback performance

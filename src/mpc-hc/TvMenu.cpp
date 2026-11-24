@@ -712,8 +712,8 @@ namespace
         // when the bar shows and what's on it, then its buttons (show / hide, order)
         { L"Control bar", { TvOpt::ShowOnStart, TvOpt::ShowOnPause, TvOpt::PauseScreenOn, TvOpt::PauseScreen, TvOpt::ShowOnMouse, TvOpt::BarHideSec,
                             TvOpt::TimeDisplay, TvOpt::ShowClock, TvOpt::ShowEndsAt, TvOpt::ButtonLabels, TvOpt::HoldOk,
-                            TvOpt::BackAction, TvOpt::SkipBackSec, TvOpt::SkipFwdSec },
-          true, false, L"\xE768", { { 0, L"When it shows" }, { 6, L"What's on it" }, { 10, L"Button actions" } } },
+                            TvOpt::BackAction, TvOpt::SkipBackSec, TvOpt::SkipFwdSec, TvOpt::ResumeLast },
+          true, false, L"\xE768", { { 0, L"When it shows" }, { 6, L"What's on it" }, { 10, L"Button actions" }, { 14, L"Starting the player" } } },
         { L"Seeking", { TvOpt::ShowOnSeek, TvOpt::SeekMode, TvOpt::SeekStepSec, TvOpt::HoldSpeedup, TvOpt::SmoothScrub,
                         TvOpt::ChapterSnap,
                         TvOpt::JumpSmall, TvOpt::JumpMedium, TvOpt::JumpLarge },
@@ -760,6 +760,7 @@ namespace
             case TvOpt::ButtonLabels: return L"The name of the selected button, under it";
             case TvOpt::HoldOk: return L"Holding OK on the bar opens a page; a short OK acts when let go";
             case TvOpt::BackAction: return L"What Back / Esc does when no menu or bar is showing";
+            case TvOpt::ResumeLast: return L"Started without a file: carry on with the last one if it was stopped part-way";
             case TvOpt::SkipBackSec: return L"How far the skip back button goes";
             case TvOpt::SkipFwdSec: return L"How far the skip forward button goes";
             case TvOpt::ShowOnSeek: return L"What Left / Right show while seeking during playback";
@@ -4496,10 +4497,7 @@ bool CTvMenu::HandleMouse(CMainFrame* pMainFrame, const MSG* pMsg)
         HWND hView = pMainFrame->m_wndView.m_hWnd;
         if (hView && (pMsg->hwnd == hView || ::IsChild(hView, pMsg->hwnd))) {
             m_bSwallowLUp = true;
-            auto& s = AfxGetAppSettings();
-            s.MRU.ReadMediaHistory();
-            const bool haveRecent = s.fKeepHistory && s.MRU.GetSize() > 0 && !s.MRU[0].fns.IsEmpty() && !s.MRU[0].fns.GetHead().IsEmpty();
-            pMainFrame->PostMessage(WM_COMMAND, haveRecent ? ID_RECENT_FILE_START : ID_FILE_OPENQUICK);
+            CTvMode::OpenLastFile(pMainFrame);
             return true;
         }
     }

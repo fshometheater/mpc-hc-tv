@@ -439,6 +439,8 @@ namespace
             { _T("BarIconBrightness"), L"Control bar icon brightness", Fmt::Percent, 100, Range(40, 100, 5) },
             { _T("BarIconOpacity"), L"Control bar icon opacity", Fmt::Percent, 100, Range(30, 100, 5) },
             { _T("BackAction"), L"Back with nothing open", Fmt::Named, 0, Range(0, _countof(kBackActionNames) - 1, 1) },
+            // off by default; the installer's recommended TV settings turn it on
+            { _T("ResumeLast"), L"Resume the last file on start", Fmt::OnOff, 0, { 0, 1 } },
             // MPC-HC's jump distances (no key: Options > Tweaks values, live); defaults = MPC-HC's
             { nullptr, L"Small jump", Fmt::MsAsTime, DEFAULT_JUMPDISTANCE_1, { 500, 1000, 2000, 3000, 5000, 10000 } },
             { nullptr, L"Medium jump", Fmt::MsAsTime, DEFAULT_JUMPDISTANCE_2, { 5000, 10000, 15000, 20000, 30000, 60000 } },
@@ -562,8 +564,48 @@ void CTvMode::ApplyRecommended()
     s.SaveSettings(); // what ApplyRecommendedSettings set while loading
     // TV Mode on, with the TV preset layout (caption and menu)
     SetTvPresetLayout();
+    SetInt(_T("ResumeLast"), 1); // started on its own: carry on with an unfinished file
     s.bTvMode = true;
     SetInt(kEnabled, 0); // started from Desktop: its layout is saved, then the TV preset applied
+}
+
+bool CTvMode::OpenLastFile(CMainFrame* pMainFrame)
+{
+    auto& s = AfxGetAppSettings();
+    s.MRU.ReadMediaHistory();
+    const bool haveRecent = s.fKeepHistory && s.MRU.GetSize() > 0 && !s.MRU[0].fns.IsEmpty() && !s.MRU[0].fns.GetHead().IsEmpty();
+    pMainFrame->PostMessage(WM_COMMAND, haveRecent ? ID_RECENT_FILE_START : ID_FILE_OPENQUICK);
+    return haveRecent;
+}
+
+// Started with nothing to play: no file, disc, device or host program (a media server's player, a
+// file opened from Explorer and /slave all bring their own), and no other player window already open.
+bool CTvMode::StartsWithoutMedia(const CAppSettings& s)
+{
+    if (!s.slFiles.IsEmpty() || (s.nCLSwitches & (CLSW_DVD | CLSW_CD | CLSW_DEVICE | CLSW_DVBSCAN | CLSW_SLAVE | CLSW_ADD |
+                                                   CLSW_CLOSE | CLSW_THUMBNAILS))) {
+        return false;
+    }
+    int windows = 0;
+    for (HWND h = nullptr; (h = FindWindowExW(nullptr, h, MPC_WND_CLASS_NAME, nullptr)) != nullptr;) {
+        windows++; // this player's own window is one of them
+    }
+    return windows <= 1;
+}
+
+// "Resume the last file on start": only when the last file was stopped part-way, i.e. MPC-HC kept a
+// position for it (it forgets it when a file plays to the end, and keeps none with "remember file
+// position" off). Opening it then carries on from there, as File > Recent files does.
+void CTvMode::ResumeAtStart(CMainFrame* pMainFrame)
+{
+    auto& s = AfxGetAppSettings();
+    if (!pMainFrame || !s.bTvMode || !IsOn(TvOpt::ResumeLast) || !s.fKeepHistory || !s.fRememberFilePos) {
+        return;
+    }
+    s.MRU.ReadMediaHistory();
+    if (s.MRU.GetSize() > 0 && !s.MRU[0].fns.IsEmpty() && !s.MRU[0].fns.GetHead().IsEmpty() && s.MRU[0].filePosition > 0) {
+        pMainFrame->PostMessage(WM_COMMAND, ID_RECENT_FILE_START);
+    }
 }
 
 void CTvMode::OnMainFrameCreated(CMainFrame* pMainFrame)

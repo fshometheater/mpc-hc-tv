@@ -1320,7 +1320,7 @@ namespace
         add(MvBool(MvHdr, L"hdr\\sendHdrMetadata", L"Send HDR metadata to the display").If(L"hdr\\hdrMode", tm));
         add(tmOn(MvHead(MvHdr, L"Tone mapping")));
         {
-            MadVrSettingDef d = MvInt(MvHdr, L"hdr\\hdrNits", L"Display peak luminance", 20, 10000, 10, L" nits");
+            MadVrSettingDef d = MvInt(MvHdr, L"hdr\\hdrNits", L"Display peak luminance", 20, 10000, 5, L" nits");
             d.bigFrom = 1000;
             d.bigStep = 100;
             add(tmOn(d));

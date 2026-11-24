@@ -34,8 +34,11 @@ and web interface are unchanged.
 > The standard 0.92.17 release may store some settings differently, so not every madVR option may show
 > or work with it. Everything else in TV Mode works with any renderer.
 
-![MPC-HC TV's control bar over a film](../docs/screenshots/tv-mode.jpg)
-<sub>Picture: <a href="https://studio.blender.org/films/singularity/"><i>Singularity</i></a> (Blender Studio, 2026), (CC) Blender Foundation | studio.blender.org, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Screenshot of a frame with the TV Mode control bar on top, scaled down.</sub>
+<p align="center">
+  <img src="../docs/screenshots/tv-mode.png" alt="MPC-HC TV's control bar over a film" width="100%">
+  <br>
+  <sub>Picture: <a href="https://studio.blender.org/films/singularity/"><i>Singularity</i></a> (Blender Studio, 2026), (CC) Blender Foundation | studio.blender.org, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Screenshots in this page show frames of it with TV Mode on top, scaled down.</sub>
+</p>
 
 ## Features
 
@@ -64,6 +67,10 @@ and web interface are unchanged.
 - Works for streams too: when a media server passes a web address instead of a file, the title and
   MediaInfo details are read from the stream.
 
+<p align="center">
+  <img src="../docs/screenshots/video-info.png" alt="Video info panel, Nightmare level" width="100%">
+</p>
+
 ### Video, madVR and LAV
 - **Video page**: video renderer, madVR settings, LAV Video, pixel shaders. After changing the
   renderer, "Restart playback to apply" reopens the file at the same place with the same tracks.
@@ -73,7 +80,15 @@ and web interface are unchanged.
   on / off and a value keep both on one row.
 - **LAV pages**: bitstreaming, DRC, output formats, hardware decoding, RGB levels, deinterlacing.
 
-![madVR HDR settings](../docs/screenshots/madvr-hdr.png)
+<p align="center">
+  <img src="../docs/screenshots/madvr-settings.png" alt="madVR settings" width="75%">
+</p>
+<p align="center">
+  <img src="../docs/screenshots/madvr-hdr.png" alt="madVR HDR settings" width="100%">
+</p>
+<p align="center">
+  <img src="../docs/screenshots/video-page.png" alt="Video page" width="60%">
+</p>
 
 ### TV options
 - **Look**: accent colour (presets or custom), background colour, menu and bar opacity, icon
@@ -89,9 +104,9 @@ and web interface are unchanged.
   remote itself; Edit shows a command's keys as tags so one can be removed and the others kept.
 - Menus wrap around, scroll smoothly with the mouse wheel, and skip options that don't apply.
 
-<p>
-  <img src="../docs/screenshots/settings.png" alt="Settings" width="49%">
-  <img src="../docs/screenshots/control-bar-options.png" alt="Control bar options" width="49%">
+<p align="center">
+  <img src="../docs/screenshots/settings.png" alt="Settings" width="54.8%">
+  <img src="../docs/screenshots/control-bar-options.png" alt="Control bar options" width="43.2%">
 </p>
 
 ### Power menu
@@ -99,9 +114,8 @@ and web interface are unchanged.
   (It can also be set to leave fullscreen or exit the player directly.)
 - The **Power** button in the bar's corner opens it too.
 
-<p>
-  <img src="../docs/screenshots/power-menu.png" alt="Power menu" width="40%">
-  <img src="../docs/screenshots/video-page.png" alt="Video page" width="58%">
+<p align="center">
+  <img src="../docs/screenshots/power-menu.png" alt="Power menu" width="55%">
 </p>
 
 ### Drawing
@@ -163,8 +177,8 @@ MPC-HC it is licensed under the **GPL-3.0** (see [COPYING.txt](../COPYING.txt)).
 Not affiliated with MPC-HC, madVR, LAV Filters, Emby or Jellyfin. The track lists follow the look and
 behaviour of Emby's and Jellyfin's players; no code, icons or fonts were taken from them.
 
-The film in the screenshot at the top is [*Singularity*](https://studio.blender.org/films/singularity/)
+The film behind the screenshots of the control bar and the info panel is [*Singularity*](https://studio.blender.org/films/singularity/)
 by Blender Studio (director Andy Goralczyk), (CC) Blender Foundation | studio.blender.org, licensed
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The screenshot shows one frame of it with
-this player's control bar on top; it isn't endorsed by Blender. The Blender and Singularity logos are not
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The screenshots show frames of it with this
+player's overlay on top; they aren't endorsed by Blender. The Blender and Singularity logos are not
 covered by that licence and are not used here.

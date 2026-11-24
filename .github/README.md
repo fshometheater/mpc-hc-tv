@@ -34,7 +34,8 @@ and web interface are unchanged.
 > The standard 0.92.17 release may store some settings differently, so not every madVR option may show
 > or work with it. Everything else in TV Mode works with any renderer.
 
-![Control bar](../docs/screenshots/control-bar.png)
+![MPC-HC TV's control bar over a film](../docs/screenshots/tv-mode.jpg)
+<sub>Picture: <a href="https://studio.blender.org/films/singularity/"><i>Singularity</i></a> (Blender Studio, 2026), (CC) Blender Foundation | studio.blender.org, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Screenshot of a frame with the TV Mode control bar on top, scaled down.</sub>
 
 ## Features
 
@@ -161,3 +162,9 @@ MPC-HC it is licensed under the **GPL-3.0** (see [COPYING.txt](../COPYING.txt)).
 
 Not affiliated with MPC-HC, madVR, LAV Filters, Emby or Jellyfin. The track lists follow the look and
 behaviour of Emby's and Jellyfin's players; no code, icons or fonts were taken from them.
+
+The film in the screenshot at the top is [*Singularity*](https://studio.blender.org/films/singularity/)
+by Blender Studio (director Andy Goralczyk), (CC) Blender Foundation | studio.blender.org, licensed
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The screenshot shows one frame of it with
+this player's control bar on top; it isn't endorsed by Blender. The Blender and Singularity logos are not
+covered by that licence and are not used here.

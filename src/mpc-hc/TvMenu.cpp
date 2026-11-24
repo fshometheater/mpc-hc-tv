@@ -7599,8 +7599,9 @@ void CTvMenu::RenderPanel()
             // On / off as a switch at the right: a pill with a knob (right + filled = on). OK, Left or
             // Right flips it; the mouse anywhere on the row too.
             const float h = fontH * 0.95f, w = h * 1.8f;
-            // its right end lines up with the other values' text (they keep room for the right arrow)
-            const int arrowRoom = TextWidth(hdc, fontRow, kTriRight) + TextWidth(hdc, fontRow, L"  ");
+            // its right end lines up with the other values' text: TV options keep room for their right
+            // arrow; madVR rows have no arrows, their values end at the row's padding
+            const int arrowRoom = (m_page == Page::MadVR) ? 0 : TextWidth(hdc, fontRow, kTriRight) + TextWidth(hdc, fontRow, L"  ");
             const float cy = (r.top + r.bottom) / 2.0f, xr = static_cast<float>(r.right - pad - arrowRoom), xl = xr - w;
             const bool on = row.toggle == 1;
             const COLORREF rowBg = focused ? kFocusColor : kPanelColor;

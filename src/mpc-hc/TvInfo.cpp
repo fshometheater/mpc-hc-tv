@@ -66,6 +66,7 @@ namespace
     struct MiJob {
         CStringW path;
         std::atomic<bool> done { false };
+        std::atomic<bool> cancel { false }; // another file took over: stop reading a stream
         MiSnapshot snap;
     };
 
@@ -157,8 +158,9 @@ namespace
     // A media server (e.g. Emby) may hand the player a stream address instead of a file path, and
     // MPC-HC's MediaInfo.dll can't open web addresses. So the file is read here in pieces with HTTP
     // range requests and given to MediaInfo, which says where to read next. Limits keep it light on
-    // the server: 1 MB pieces, at most 64 MB and 256 requests.
-    bool OpenFromWeb(MediaInfoDLL::MediaInfo& mi, const CStringW& url, CStringW& error)
+    // the server: 1 MB pieces, at most 64 MB and 256 requests. Stops between pieces once `cancel` is set
+    // (another file is playing, nobody will look at this one).
+    bool OpenFromWeb(MediaInfoDLL::MediaInfo& mi, const CStringW& url, const std::atomic<bool>& cancel, CStringW& error)
     {
         constexpr DWORD kChunk = 1u << 20;
         constexpr ULONGLONG kMaxBytes = 64ull << 20;
@@ -231,7 +233,7 @@ namespace
             } else {
                 pos += got;
             }
-            if ((total && pos >= total) || read >= kMaxBytes || requests >= kMaxRequests || !readAt(pos, got)) {
+            if (cancel || (total && pos >= total) || read >= kMaxBytes || requests >= kMaxRequests || !readAt(pos, got)) {
                 break;
             }
             read += got;
@@ -285,7 +287,7 @@ namespace
             mi.Option(L"Complete", L"1");
             const bool web = IsWebAddress(job->path);
             CStringW webError;
-            if (web ? !OpenFromWeb(mi, job->path, webError) : mi.Open(std::wstring(job->path.GetString())) == 0) {
+            if (web ? !OpenFromWeb(mi, job->path, job->cancel, webError) : mi.Open(std::wstring(job->path.GetString())) == 0) {
                 // with the path, so a launcher's way of passing the file (a URL, a mapped share) is visible;
                 // a web address without its query string (it can carry an access key)
                 job->snap.error = web ? webError : L"MediaInfo could not read " + job->path;
@@ -434,7 +436,7 @@ namespace
         // DXGI 1.6 output description: real signal bit depth and colour space (HDR10 or SDR).
         // Loaded at run time so no new import library is needed.
         typedef HRESULT(WINAPI * PCreateFactory)(REFIID, void**);
-        if (HMODULE hDxgi = LoadLibraryW(L"dxgi.dll")) {
+        if (HMODULE hDxgi = LoadLibraryExW(L"dxgi.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32)) { // never the player's folder
             if (auto pCreate = reinterpret_cast<PCreateFactory>(GetProcAddress(hDxgi, "CreateDXGIFactory1"))) {
                 CComPtr<IDXGIFactory1> pFactory;
                 if (SUCCEEDED(pCreate(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&pFactory)))) {
@@ -476,9 +478,11 @@ namespace
         using namespace TvNvApi;
         NvSignal s;
 #ifdef _WIN64
-        static HMODULE hNv = LoadLibraryW(L"nvapi64.dll"); // installed by every NVIDIA driver
+        // installed into the system folder by every NVIDIA driver; loaded only from there, never from the
+        // player's folder
+        static HMODULE hNv = LoadLibraryExW(L"nvapi64.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 #else
-        static HMODULE hNv = LoadLibraryW(L"nvapi.dll");
+        static HMODULE hNv = LoadLibraryExW(L"nvapi.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 #endif
         static PQueryInterface query = hNv ? reinterpret_cast<PQueryInterface>(GetProcAddress(hNv, "nvapi_QueryInterface")) : nullptr;
         static bool initialized = false;
@@ -867,7 +871,11 @@ void CTvInfo::Prepare(CMainFrame* pMainFrame)
     if (path.IsEmpty() || (g_job && g_job->path == path)) {
         return;
     }
-    // A new job; a still-running old one finishes on its own (it owns its data).
+    // A new job; a still-running old one finishes on its own (it owns its data). A stream it is still
+    // reading stops at the next piece.
+    if (g_job) {
+        g_job->cancel = true;
+    }
     auto job = std::make_shared<MiJob>();
     job->path = path;
     g_job = job;

@@ -133,9 +133,11 @@ display stays at a high refresh rate (e.g. 120 Hz) during playback.
   Don't edit the same setting in madVR's window at the same time.
 - **Display mode list** ("Display modes" submenu): madVR offers no API to write this value, so the
   player exports madVR's settings record, replaces only that value, imports it and compares a fresh
-  export; anything unexpected puts the original back. Verified with madVR **0.92.17 beta**; other
-  versions may refuse (then nothing changes and the panel says so).
-- HDR option IDs and value lists come from madVR 0.92.17. madVR says its short IDs never change;
+  export; anything unexpected puts the original back. Verified with madVR **0.92.17 test build 210**;
+  other versions may refuse (then nothing changes and the panel says so).
+- All madVR option IDs and value lists come from **madVR 0.92.17 test build 210** (madshi's HDR
+  measurement build: [announcement](https://www.avsforum.com/posts/64465710/),
+  [download](https://madshi.net/madVRhdrMeasure210.zip)). The standard 0.92.17 release may differ;
   options the installed madVR doesn't have are hidden.
 
 ### LAV pages

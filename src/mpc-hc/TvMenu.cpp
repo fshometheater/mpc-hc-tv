@@ -7711,7 +7711,7 @@ void CTvMenu::RenderPanel()
                 const RECT rp = { x - w, static_cast<LONG>(cy - pillH / 2.0f), x, static_cast<LONG>(cy + pillH / 2.0f) };
                 const bool picked = (k == pickedIdx);
                 // the picked one as a chip like the madVR values (panel colour over the highlight);
-                // Edit: the keys in red, the picked one on a red chip (OK takes it off)
+                // Edit: the keys in white, the picked one on a red chip (OK takes it off)
                 const COLORREF rowBg = focused ? kFocusColor : kPanelColor;
                 const COLORREF kRemoveColor = RGB(196, 48, 52);
                 if (picked) {
@@ -7720,9 +7720,7 @@ void CTvMenu::RenderPanel()
                                              { static_cast<float>(rp.right), static_cast<float>(rp.bottom) }, { static_cast<float>(rp.left), static_cast<float>(rp.bottom) } },
                                            pillH * 0.35f, fill);
                 }
-                const COLORREF ink = picked ? kTextColor
-                                     : tags ? Mix(RGB(255, 150, 150), rowBg, 0.15f)
-                                            : (focused ? kFocusDimTextColor : kDimTextColor);
+                const COLORREF ink = (picked || tags) ? kTextColor : (focused ? kFocusDimTextColor : kDimTextColor);
                 DrawLine(hdc, fontRow, ink, names[k], rp, DT_CENTER);
                 pillLeft = rp.left;
                 x = rp.left - gapX;

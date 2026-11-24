@@ -77,8 +77,11 @@ and web interface are unchanged.
 ### TV options
 - **Look**: accent colour (presets or custom), background colour, menu and bar opacity, icon
   brightness, menu and bar size, font, animation speed (Off to Slowest).
-- **Control bar**: when it shows (start, pause, mouse), what's on it, Hold OK, and what Back does when
-  nothing is open.
+- **Control bar**: when it shows (start, pause, mouse), what's on it, Hold OK, skip distances.
+- **Player**: **Resume the last file on start** (started on its own, with no file from a media server,
+  Explorer or the command line, the player carries on with the last file if it was stopped part-way),
+  the pause screen, what Back does when nothing is open, and MPC-HC's own *remember file position*,
+  *open in fullscreen*, *leave fullscreen at the end* and *after playback*, changed from the remote.
 - **Seeking**: step, hold speed-up, smooth scrubbing, chapter snapping, MPC-HC's jump distances.
 - **Button / key mapping**: any key for any command, including holds (0.6 s, OK included) and the arrow
   keys, so a remote with few buttons goes a long way. Set, Set hold, Edit and Clear work from the
@@ -111,9 +114,9 @@ and web interface are unchanged.
 1. Download the installer or the portable zip from the
    [releases](https://github.com/fshometheater/mpc-hc-tv/releases) (64-bit or 32-bit).
 2. The installer's **"Apply recommended TV settings"** (ticked by default) turns on TV Mode with the TV
-   layout, fullscreen on open, the dark theme, the TV logo and the TV subtitle style. It also turns on
-   MPC-HC's *remember file position*; if a media server handles resume, untick the box or switch that
-   option off afterwards.
+   layout, fullscreen on open, the dark theme, the TV logo, the TV subtitle style and *Resume the last
+   file on start*. It also turns on MPC-HC's *remember file position*; if a media server handles
+   resume, untick the box or switch that option off afterwards.
 3. Turn TV Mode on or off any time: start with `/tv`, View > TV Mode, or View > Presets > **TV** (key 5)
    / **TV Minimal** (key 6, borderless).
 4. Open the control bar with **Down** (or the key you set), move with the arrows, OK selects, Back goes

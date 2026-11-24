@@ -70,6 +70,7 @@ enum class TvOpt {
     BarIconBrightness,// control bar icons that aren't selected: brightness %
     BarIconOpacity,  // ... and opacity % (the selected button stays full)
     BackAction,      // Back / Esc with no menu open: 0 the power menu, 1 leave fullscreen (MPC-HC's), 2 exit
+    ResumeLast,      // started without a file: reopen the last one if it was stopped part-way (has a saved position)
     // MPC-HC's own jump distances (Options > Tweaks), used by its small / medium / large jump
     // commands (assignable in Remote keys); read and written live, in ms
     JumpSmall,
@@ -87,6 +88,12 @@ enum class TvOpt {
     SubShadowOpacity,
     SubMargin,       // distance from the bottom (bottom margin)
     SubRelativeTo,   // Window / Video / Auto
+    // MPC-HC's own player settings, read and written live (TV options > Player); not stored in the
+    // TvMode section, saved with MPC-HC's settings
+    LaunchFullscreen,    // Options > Playback > Fullscreen: open files in fullscreen
+    RememberFilePos,     // Options > Player > History: remember file position
+    ExitFullscreenAtEnd, // Options > Playback > Fullscreen: leave fullscreen at the end
+    AfterPlayback,       // Play > After playback (MPC-HC's AfterPlayback values)
     Count
 };
 
@@ -99,7 +106,8 @@ inline bool IsSubtitleStyleOpt(TvOpt opt)
 // True for options that live in MPC-HC's own settings (not the TvMode section).
 inline bool IsMpcSettingOpt(TvOpt opt)
 {
-    return IsSubtitleStyleOpt(opt) || opt == TvOpt::JumpSmall || opt == TvOpt::JumpMedium || opt == TvOpt::JumpLarge;
+    return IsSubtitleStyleOpt(opt) || opt == TvOpt::JumpSmall || opt == TvOpt::JumpMedium || opt == TvOpt::JumpLarge ||
+           (opt >= TvOpt::LaunchFullscreen && opt <= TvOpt::AfterPlayback);
 }
 
 // Switching between TV Mode and Desktop Mode, and the TV options.
@@ -126,6 +134,12 @@ public:
     static void ApplyRecommended();      // ... and its layout, once the main window exists
     // View > Presets > TV: caption and menu, no toolbars; TV Minimal: borderless, no toolbars
     static void SetTvPresetLayout(bool minimal = false);
+    // The last file of MPC-HC's recent files: OpenLastFile opens it (File > Recent files > the first one),
+    // or offers File > Quick Open when there is none. Start-up: StartsWithoutMedia is asked before the
+    // command line is handled, ResumeAtStart after it ("Open the last file on start").
+    static bool OpenLastFile(CMainFrame* pMainFrame);
+    static bool StartsWithoutMedia(const CAppSettings& s);
+    static void ResumeAtStart(CMainFrame* pMainFrame);
     static void Enter(CMainFrame* pMainFrame, bool fromDesktop);
     static void Leave(CMainFrame* pMainFrame);
 

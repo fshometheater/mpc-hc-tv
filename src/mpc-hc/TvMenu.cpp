@@ -1332,7 +1332,7 @@ namespace
                          Names({ L"high strength", L"balanced", L"disabled" }))));
         add(tmOn(MvIndex(MvHdr, L"hdr\\hdrHighlightRecovery", L"Highlight recovery",
                          Names({ L"disabled", L"low", L"medium", L"high", L"very high", L"are you nuts!?" }))));
-        add(tmOn(MvInt(MvHdr, L"hdr\\hdrHighlightRecoveryStrength", L"Highlight recovery strength", 0, 1000, 10)));
+        add(tmOn(MvInt(MvHdr, L"hdr\\hdrHighlightRecoveryStrength", L"Highlight recovery strength", 0, 1000, 5)));
         add(tmOn(MvIndex(MvHdr, L"hdr\\hdrContrastRecovery", L"Contrast recovery",
                          Names({ L"disabled", L"Manni's L80", L"Soulnight's Mirror", L"Neo-XP's Equalizer", L"Fer15's old Medium",
                                  L"Neo-XP's 1.0 High", L"Log Very Low", L"Log Very Low - Low", L"Log Low", L"Log Low - Medium",
@@ -1350,7 +1350,7 @@ namespace
         add(MvInt(MvHdr, L"hdr\\nscPercent", L"percent", 0, 100, 1, L" %").Paired());
         add(MvInt(MvHdr, L"hdr\\nscNits", L"... or nits", 0, 100, 1, L" nits").If(L"hdr\\noSceneChange", L"true"));
         add(tmOn(MvInt(MvHdr, L"hdr\\M2Low2New", L"No scene cut if M2 <", 0, 1000, 1)));
-        add(tmOn(MvInt(MvHdr, L"hdr\\M1High", L"Definite cut if M1 >", 0, 10000, 10)));
+        add(tmOn(MvInt(MvHdr, L"hdr\\M1High", L"Definite cut if M1 >", 0, 10000, 5)));
         add(tmOn(MvInt(MvHdr, L"hdr\\M1Thresh2New", L"M1 threshold", 0, 1000, 1)));
         add(tmOn(MvInt(MvHdr, L"hdr\\M2Thresh2New", L"M2 threshold", 0, 1000, 1)));
         add(tmOn(MvBool(MvHdr, L"hdr\\adjSceneCutApl", L"Adjust scene cut for APL")));
@@ -1386,7 +1386,7 @@ namespace
         const LPCWSTR speedNames[] = { L"No difference", L"20% difference", L"50% difference", L"100% difference",
                                        L"200% difference", L"400% difference", L"800% difference" };
         for (int i = 0; i < 7; i++) {
-            add(tmOn(MvInt(MvHdr, speedIds[i], speedNames[i], 0, 5000, 10)).Col(1));
+            add(tmOn(MvInt(MvHdr, speedIds[i], speedNames[i], 0, 5000, 5)).Col(1));
         }
         add(tmOn(MvInt(MvHdr, L"hdr\\flickerRiskMul", L"Flicker risk multiplier", 1, 100, 1)).Col(1));
         add(tmOn(MvHead(MvHdr, L"Dynamic")).Col(1));
@@ -1405,7 +1405,7 @@ namespace
             }
             add(MvList(MvHdr, L"hdr\\avgHFactor", L"avgHighlights ceiling value", v, n).Paired().Col(1));
         }
-        add(tmOn(MvInt(MvHdr, L"hdr\\noComprLimit", L"No compression limit", 0, 1000, 10)).Col(1));
+        add(tmOn(MvInt(MvHdr, L"hdr\\noComprLimit", L"No compression limit", 0, 1000, 5)).Col(1));
         {
             std::vector<CStringW> fall = { L"off" };
             for (int i = 90; i >= 0; i -= 10) {

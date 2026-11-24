@@ -161,6 +161,7 @@ namespace
     }
 
     const int kHitTriDown = 10, kHitTriUp = 11; // madVR edit chip: mouse areas of its triangles
+    const int kHitSwitchBase = 1000;            // madVR on / off + value row's switch: 1000 + row index
     const wchar_t kIconRemove[] = { 0x2715, 0 }; // multiplication x: remove this tag
     const wchar_t kIconMini[] = { 0xE73F, 0 };   // BackToWindow: shrink the list to the mini view
     const wchar_t kIconExpand[] = { 0xE740, 0 }; // FullScreen: back to the full list
@@ -1319,7 +1320,7 @@ namespace
         add(MvBool(MvHdr, L"hdr\\sendHdrMetadata", L"Send HDR metadata to the display").If(L"hdr\\hdrMode", tm));
         add(tmOn(MvHead(MvHdr, L"Tone mapping")));
         {
-            MadVrSettingDef d = MvInt(MvHdr, L"hdr\\hdrNits", L"Display peak luminance", 20, 10000, 10, L" nits");
+            MadVrSettingDef d = MvInt(MvHdr, L"hdr\\hdrNits", L"Display peak luminance", 20, 10000, 5, L" nits");
             d.bigFrom = 1000;
             d.bigStep = 100;
             add(tmOn(d));
@@ -1331,7 +1332,7 @@ namespace
                          Names({ L"high strength", L"balanced", L"disabled" }))));
         add(tmOn(MvIndex(MvHdr, L"hdr\\hdrHighlightRecovery", L"Highlight recovery",
                          Names({ L"disabled", L"low", L"medium", L"high", L"very high", L"are you nuts!?" }))));
-        add(tmOn(MvInt(MvHdr, L"hdr\\hdrHighlightRecoveryStrength", L"Highlight recovery strength", 0, 1000, 10)));
+        add(tmOn(MvInt(MvHdr, L"hdr\\hdrHighlightRecoveryStrength", L"Highlight recovery strength", 0, 1000, 5)));
         add(tmOn(MvIndex(MvHdr, L"hdr\\hdrContrastRecovery", L"Contrast recovery",
                          Names({ L"disabled", L"Manni's L80", L"Soulnight's Mirror", L"Neo-XP's Equalizer", L"Fer15's old Medium",
                                  L"Neo-XP's 1.0 High", L"Log Very Low", L"Log Very Low - Low", L"Log Low", L"Log Low - Medium",
@@ -1349,7 +1350,7 @@ namespace
         add(MvInt(MvHdr, L"hdr\\nscPercent", L"percent", 0, 100, 1, L" %").Paired());
         add(MvInt(MvHdr, L"hdr\\nscNits", L"... or nits", 0, 100, 1, L" nits").If(L"hdr\\noSceneChange", L"true"));
         add(tmOn(MvInt(MvHdr, L"hdr\\M2Low2New", L"No scene cut if M2 <", 0, 1000, 1)));
-        add(tmOn(MvInt(MvHdr, L"hdr\\M1High", L"Definite cut if M1 >", 0, 10000, 10)));
+        add(tmOn(MvInt(MvHdr, L"hdr\\M1High", L"Definite cut if M1 >", 0, 10000, 5)));
         add(tmOn(MvInt(MvHdr, L"hdr\\M1Thresh2New", L"M1 threshold", 0, 1000, 1)));
         add(tmOn(MvInt(MvHdr, L"hdr\\M2Thresh2New", L"M2 threshold", 0, 1000, 1)));
         add(tmOn(MvBool(MvHdr, L"hdr\\adjSceneCutApl", L"Adjust scene cut for APL")));
@@ -1385,7 +1386,7 @@ namespace
         const LPCWSTR speedNames[] = { L"No difference", L"20% difference", L"50% difference", L"100% difference",
                                        L"200% difference", L"400% difference", L"800% difference" };
         for (int i = 0; i < 7; i++) {
-            add(tmOn(MvInt(MvHdr, speedIds[i], speedNames[i], 0, 5000, 10)).Col(1));
+            add(tmOn(MvInt(MvHdr, speedIds[i], speedNames[i], 0, 5000, 5)).Col(1));
         }
         add(tmOn(MvInt(MvHdr, L"hdr\\flickerRiskMul", L"Flicker risk multiplier", 1, 100, 1)).Col(1));
         add(tmOn(MvHead(MvHdr, L"Dynamic")).Col(1));
@@ -1404,7 +1405,7 @@ namespace
             }
             add(MvList(MvHdr, L"hdr\\avgHFactor", L"avgHighlights ceiling value", v, n).Paired().Col(1));
         }
-        add(tmOn(MvInt(MvHdr, L"hdr\\noComprLimit", L"No compression limit", 0, 1000, 10)).Col(1));
+        add(tmOn(MvInt(MvHdr, L"hdr\\noComprLimit", L"No compression limit", 0, 1000, 5)).Col(1));
         {
             std::vector<CStringW> fall = { L"off" };
             for (int i = 90; i >= 0; i -= 10) {
@@ -2675,9 +2676,7 @@ std::vector<int> CTvMenu::MadVrParts(int row) const
     if (r.faded) {
         return parts; // only applies while an on / off above is on: can't be edited
     }
-    if (!r.prefix.IsEmpty()) {
-        parts.push_back(MvPartToggle); // "On" / "Off"
-    }
+    // the on / off of an on / off + value row is a switch that OK flips, not a part to pick
     if (!r.value.IsEmpty() && !(r.data2 >= 0 && r.prefix != L"On")) {
         parts.push_back(MvPartValue); // the number next to an on / off only while it's on
     }
@@ -2696,6 +2695,38 @@ void CTvMenu::StartMadVrEdit()
     m_nMadVrPart = std::find(parts.begin(), parts.end(), MvPartValue) != parts.end() ? MvPartValue : parts[0];
     m_rowFade.valid = false;
     Render();
+}
+
+// An on / off + value row (e.g. "Sharpen edges  0.6  [switch]"): OK (while editing) or a click on the
+// switch flips the on / off. Turned off, editing ends (nothing left to change); the switch slides.
+void CTvMenu::ToggleMadVrOnOff()
+{
+    if (m_nFocus < 0 || m_nFocus >= static_cast<int>(m_rows.size())) {
+        return;
+    }
+    const Row r = m_rows[m_nFocus]; // copy: rebuilt below
+    if (r.kind != RowKind::MadVrSetting || r.data2 < 0 || r.faded) {
+        return;
+    }
+    m_nToggleAnimKey = ToggleKey(r);
+    m_nToggleAnimStart = GetTickCount64();
+    StepMadVrSetting(r.data, +1);
+    RebuildKeepingMadVrFocus(r.data); // shows what madVR now reports
+    if (m_nFocus < static_cast<int>(m_rows.size()) && m_rows[m_nFocus].prefix != L"On" && m_nMadVrPart >= 0) {
+        if (m_bMadVrCompact) {
+            m_nMadVrPart = -1; // mini view: stop editing, the strip stays
+            m_rowFade.valid = false;
+            Render();
+        } else {
+            EndMadVrEdit();
+        }
+    } else if (m_nMadVrPart >= 0) {
+        const auto parts = MadVrParts(m_nFocus);
+        if (!parts.empty() && std::find(parts.begin(), parts.end(), m_nMadVrPart) == parts.end()) {
+            m_nMadVrPart = parts[0];
+            Render();
+        }
+    }
 }
 
 void CTvMenu::EndMadVrEdit()
@@ -2794,6 +2825,14 @@ bool CTvMenu::MadVrClick(int row, POINT pt)
     }
     if (m_page != Page::MadVR || row < 0 || row >= static_cast<int>(m_rows.size()) || m_rows[row].kind != RowKind::MadVrSetting) {
         return false;
+    }
+    for (const auto& hp : m_hitMadVrParts) {
+        // the switch of an on / off + value row: a click flips it (focused, editing or not)
+        if (hp.second >= kHitSwitchBase && PtInRect(&hp.first, pt)) {
+            m_nFocus = hp.second - kHitSwitchBase;
+            ToggleMadVrOnOff();
+            return true;
+        }
     }
     if (m_rows[row].toggle >= 0) {
         // a plain on / off (a switch): a click anywhere on the row flips it, as OK does
@@ -2971,15 +3010,14 @@ bool CTvMenu::HandleMadVrKey(UINT vk, bool isRepeat)
             return true;
         }
         case VK_RETURN:
+            // Editing: OK flips the on / off of an on / off + value row (Back is done); on a value
+            // without an on / off it only toggles the mini view when that icon is picked
             if (!isRepeat) {
-                if (m_nMadVrPart == MvPartMini) {
+                const Row& cur = m_rows[m_nFocus];
+                if (cur.data2 >= 0 && !cur.prefix.IsEmpty()) {
+                    ToggleMadVrOnOff();
+                } else if (m_nMadVrPart == MvPartMini) {
                     SetMadVrCompact(!m_bMadVrCompact); // mini view on / off
-                } else if (m_bMadVrCompact) {
-                    m_nMadVrPart = -1; // mini view: OK just stops editing, the strip stays
-                    m_rowFade.valid = false;
-                    Render();
-                } else {
-                    EndMadVrEdit();
                 }
             }
             return true;
@@ -6055,8 +6093,11 @@ void CTvMenu::Activate()
             if (row.toggle >= 0) {
                 StepMadVrSetting(row.data, +1); // a plain on / off: OK flips it (the switch slides)
                 RebuildKeepingMadVrFocus(row.data);
+            } else if (row.data2 >= 0 && row.prefix != L"On") {
+                ToggleMadVrOnOff(); // an on / off + value that's off: OK turns it on ...
+                StartMadVrEdit();   // ... and edits its value
             } else {
-                StartMadVrEdit(); // OK starts editing; nothing changes until Up / Down
+                StartMadVrEdit(); // OK starts editing: Up / Down change, OK flips an on / off, Back is done
             }
             break;
         case RowKind::MadVrStats:
@@ -7520,6 +7561,39 @@ void CTvMenu::RenderPanel()
         }
     }
 
+    // An on / off switch (a pill with a knob, right + filled = on) whose right end is at xr; returns
+    // its left end. Just flipped (animKey), the knob slides over and the colours blend.
+    auto drawSwitch = [&](float xr, float cy, bool on, bool focused, bool faded, int animKey) -> float {
+        const float h = fontH * 0.95f, w = h * 1.8f, xl = xr - w;
+        const COLORREF rowBg = focused ? kFocusColor : kPanelColor;
+        float amount = on ? 1.0f : 0.0f; // 0 = off look, 1 = on look
+        if (m_nToggleAnimKey == animKey && CTvMode::AnimScale() > 0.0f) {
+            const float t = std::clamp(static_cast<float>(GetTickCount64() - m_nToggleAnimStart) / (160.0f * CTvMode::AnimScale()), 0.0f, 1.0f);
+            const float e = 1.0f - (1.0f - t) * (1.0f - t); // ease out
+            amount = on ? e : 1.0f - e;
+            if (t < 1.0f) {
+                m_bDirty = true; // next frame
+            } else {
+                m_nToggleAnimKey = -1;
+            }
+        }
+        const COLORREF trackOn = focused ? kTextColor : kFocusColor, trackOff = Mix(rowBg, kTextColor, focused ? 0.3f : 0.22f);
+        const COLORREF knobOn = focused ? kFocusColor : kTextColor, knobOff = Mix(kTextColor, rowBg, 0.1f);
+        COLORREF track = Mix(trackOff, trackOn, amount);
+        COLORREF knob = Mix(knobOff, knobOn, amount);
+        if (faded) {
+            track = Mix(track, rowBg, 0.6f);
+            knob = Mix(knob, rowBg, 0.6f);
+        }
+        canvas.FillCircleAA(xl + h / 2, cy, h / 2, track);
+        canvas.FillCircleAA(xr - h / 2, cy, h / 2, track);
+        RECT rMid = { static_cast<LONG>(xl + h / 2), static_cast<LONG>(cy - h / 2 + 0.5f), static_cast<LONG>(xr - h / 2),
+                      static_cast<LONG>(cy + h / 2 + 0.5f) };
+        FillSolid(hdc, rMid, track);
+        canvas.FillCircleAA(xl + h / 2 + (w - h) * amount, cy, h / 2 - std::max(2.0f, h * 0.12f), knob);
+        return xl;
+    };
+
     // Rows
     for (int i = 0; i < count; i++) {
         const RECT r = rowRect(i);
@@ -7614,10 +7688,26 @@ void CTvMenu::RenderPanel()
             int x = r.right - pad;
             const int chipPad = pad / 2;
             const int triGap = pad / 3;
+            // An on / off + value row: its on / off is a switch between the value and the mini-view
+            // icon ("0.6  [switch]"); OK while editing or a click flips it
+            const bool paired = row.data2 >= 0 && !row.prefix.IsEmpty();
+            bool switchDrawn = !paired;
+            auto drawRowSwitch = [&]() {
+                const float cy = (r.top + r.bottom) / 2.0f;
+                const float xl = drawSwitch(static_cast<float>(x), cy, row.prefix == L"On", focused, row.faded, ToggleKey(row));
+                const float h = fontH * 0.95f;
+                m_hitMadVrParts.push_back({ RECT { panelX + static_cast<LONG>(xl) - pad / 2, panelY + static_cast<LONG>(cy - h),
+                                                   panelX + x + pad / 2, panelY + static_cast<LONG>(cy + h) }, kHitSwitchBase + i });
+                x = static_cast<int>(xl) - pad;
+                switchDrawn = true;
+            };
             for (int k = static_cast<int>(parts.size()) - 1; k >= 0; k--) {
                 const int part = parts[k];
                 if (part == 2 && !editing) {
                     continue; // the mini-view icon only while editing
+                }
+                if (!switchDrawn && part != 2) {
+                    drawRowSwitch(); // right of the value, left of the mini-view icon
                 }
                 const bool icon = (part == 2);
                 HFONT f = icon ? fontMdl : fontRow;
@@ -7660,6 +7750,9 @@ void CTvMenu::RenderPanel()
                     m_hitMadVrParts.push_back({ RECT { panelX + rc.left, panelY + rc.top, panelX + rc.right, panelY + rc.bottom }, part });
                 }
                 x = rc.left - pad;
+            }
+            if (!switchDrawn) {
+                drawRowSwitch(); // off (no value shown): just the switch
             }
             RECT rLabel = { r.left + pad, r.top, std::max<int>(r.left + pad, x - pad), r.bottom };
             DrawLine(hdc, fontRow, fadeBack(kTextColor, row.faded), row.text, rLabel, DT_LEFT);
@@ -7737,39 +7830,11 @@ void CTvMenu::RenderPanel()
         if (row.toggle >= 0 && row.detail.IsEmpty()) {
             // On / off as a switch at the right: a pill with a knob (right + filled = on). OK, Left or
             // Right flips it; the mouse anywhere on the row too.
-            const float h = fontH * 0.95f, w = h * 1.8f;
             // its right end lines up with the other values' text: TV options keep room for their right
             // arrow; madVR rows have no arrows, their values end at the row's padding
             const int arrowRoom = (m_page == Page::MadVR) ? 0 : TextWidth(hdc, fontRow, kTriRight) + TextWidth(hdc, fontRow, L"  ");
-            const float cy = (r.top + r.bottom) / 2.0f, xr = static_cast<float>(r.right - pad - arrowRoom), xl = xr - w;
-            const bool on = row.toggle == 1;
-            const COLORREF rowBg = focused ? kFocusColor : kPanelColor;
-            // Just flipped: the knob slides over and the colours blend (Animations speed)
-            float amount = on ? 1.0f : 0.0f; // 0 = off look, 1 = on look
-            if (m_nToggleAnimKey == ToggleKey(row) && CTvMode::AnimScale() > 0.0f) {
-                const float t = std::clamp(static_cast<float>(GetTickCount64() - m_nToggleAnimStart) / (160.0f * CTvMode::AnimScale()), 0.0f, 1.0f);
-                const float e = 1.0f - (1.0f - t) * (1.0f - t); // ease out
-                amount = on ? e : 1.0f - e;
-                if (t < 1.0f) {
-                    m_bDirty = true; // next frame
-                } else {
-                    m_nToggleAnimKey = -1;
-                }
-            }
-            const COLORREF trackOn = focused ? kTextColor : kFocusColor, trackOff = Mix(rowBg, kTextColor, focused ? 0.3f : 0.22f);
-            const COLORREF knobOn = focused ? kFocusColor : kTextColor, knobOff = Mix(kTextColor, rowBg, 0.1f);
-            COLORREF track = Mix(trackOff, trackOn, amount);
-            COLORREF knob = Mix(knobOff, knobOn, amount);
-            if (row.faded) {
-                track = Mix(track, rowBg, 0.6f);
-                knob = Mix(knob, rowBg, 0.6f);
-            }
-            canvas.FillCircleAA(xl + h / 2, cy, h / 2, track);
-            canvas.FillCircleAA(xr - h / 2, cy, h / 2, track);
-            RECT rMid = { static_cast<LONG>(xl + h / 2), static_cast<LONG>(cy - h / 2 + 0.5f), static_cast<LONG>(xr - h / 2),
-                          static_cast<LONG>(cy + h / 2 + 0.5f) };
-            FillSolid(hdc, rMid, track);
-            canvas.FillCircleAA(xl + h / 2 + (w - h) * amount, cy, h / 2 - std::max(2.0f, h * 0.12f), knob);
+            const float xl = drawSwitch(static_cast<float>(r.right - pad - arrowRoom), (r.top + r.bottom) / 2.0f, row.toggle == 1,
+                                        focused, row.faded, ToggleKey(row));
             RECT rLabel = { textLeft, r.top, static_cast<LONG>(xl) - pad * 2, r.bottom };
             DrawLine(hdc, fontRow, textColor, row.text, rLabel, DT_LEFT);
             continue;
@@ -7902,9 +7967,11 @@ void CTvMenu::RenderPanel()
     } else if (tagRow) {
         hint.Format(L"%s%s pick   %s move   OK remove...   Back return", kTriLeft, kTriRight, kArrowUpDown);
     } else if (madVrRow && m_nMadVrPart == 2) {
-        hint.Format(L"%s mini view   %s full list   %s%s switch   Back done", kTriUp, kTriDown, kTriLeft, kTriRight);
+        hint.Format(L"%s mini view   %s full list   %s%s pick   %sBack done", kTriUp, kTriDown, kTriLeft, kTriRight,
+                    (m_rows[m_nFocus].data2 >= 0 && !m_rows[m_nFocus].prefix.IsEmpty()) ? L"OK on / off   " : L"");
     } else if (madVrRow && m_nMadVrPart >= 0) {
-        hint.Format(L"%s change   %s%s switch   OK done", kArrowUpDown, kTriLeft, kTriRight);
+        hint.Format(L"%s change   %s%s pick   %sBack done", kArrowUpDown, kTriLeft, kTriRight,
+                    (m_rows[m_nFocus].data2 >= 0 && !m_rows[m_nFocus].prefix.IsEmpty()) ? L"OK on / off   " : L"");
     } else if (compact) {
         hint.Format(L"%s next setting   %sOK edit   Back full list", kArrowUpDown,
                     m_bTwoColumns ? (CStringW(kTriLeft) + kTriRight + L" column   ").GetString() : L"");

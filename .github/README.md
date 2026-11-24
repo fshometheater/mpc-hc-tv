@@ -77,10 +77,11 @@ and web interface are unchanged.
 ### TV options
 - **Look**: accent colour (presets or custom), background colour, menu and bar opacity, icon
   brightness, menu and bar size, font, animation speed (Off to Slowest).
-- **Control bar**: when it shows (start, pause, mouse), what's on it, Hold OK, what Back does when
-  nothing is open, and **Resume the last file on start**: started on its own (no file from a media
-  server, Explorer or the command line), the player carries on with the last file if it was stopped
-  part-way.
+- **Control bar**: when it shows (start, pause, mouse), what's on it, Hold OK, skip distances.
+- **Player**: **Resume the last file on start** (started on its own, with no file from a media server,
+  Explorer or the command line, the player carries on with the last file if it was stopped part-way),
+  the pause screen, what Back does when nothing is open, and MPC-HC's own *remember file position*,
+  *open in fullscreen*, *leave fullscreen at the end* and *after playback*, changed from the remote.
 - **Seeking**: step, hold speed-up, smooth scrubbing, chapter snapping, MPC-HC's jump distances.
 - **Button / key mapping**: any key for any command, including holds (0.6 s, OK included) and the arrow
   keys, so a remote with few buttons goes a long way. Set, Set hold, Edit and Clear work from the

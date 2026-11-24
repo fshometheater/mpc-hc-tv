@@ -710,10 +710,14 @@ namespace
                            TvOpt::SmoothPlayhead, TvOpt::OverlayMode },
           false, false, L"\xE790", { { 0, L"Look" }, { 10, L"Menus" }, { 14, L"Motion and drawing" } } },
         // when the bar shows and what's on it, then its buttons (show / hide, order)
-        { L"Control bar", { TvOpt::ShowOnStart, TvOpt::ShowOnPause, TvOpt::PauseScreenOn, TvOpt::PauseScreen, TvOpt::ShowOnMouse, TvOpt::BarHideSec,
+        { L"Control bar", { TvOpt::ShowOnStart, TvOpt::ShowOnPause, TvOpt::ShowOnMouse, TvOpt::BarHideSec,
                             TvOpt::TimeDisplay, TvOpt::ShowClock, TvOpt::ShowEndsAt, TvOpt::ButtonLabels, TvOpt::HoldOk,
-                            TvOpt::BackAction, TvOpt::SkipBackSec, TvOpt::SkipFwdSec, TvOpt::ResumeLast },
-          true, false, L"\xE768", { { 0, L"When it shows" }, { 6, L"What's on it" }, { 10, L"Button actions" }, { 14, L"Starting the player" } } },
+                            TvOpt::SkipBackSec, TvOpt::SkipFwdSec },
+          true, false, L"\xE768", { { 0, L"When it shows" }, { 4, L"What's on it" }, { 8, L"Button actions" } } },
+        // the player around the bar: starting, pausing, the end of a file, Back; partly MPC-HC's own settings
+        { L"Player", { TvOpt::ResumeLast, TvOpt::RememberFilePos, TvOpt::LaunchFullscreen, TvOpt::PauseScreenOn, TvOpt::PauseScreen,
+                       TvOpt::ExitFullscreenAtEnd, TvOpt::AfterPlayback, TvOpt::BackAction },
+          false, false, L"\xE714", { { 0, L"Starting" }, { 3, L"When paused" }, { 5, L"At the end of a file" }, { 7, L"Keys" } } },
         { L"Seeking", { TvOpt::ShowOnSeek, TvOpt::SeekMode, TvOpt::SeekStepSec, TvOpt::HoldSpeedup, TvOpt::SmoothScrub,
                         TvOpt::ChapterSnap,
                         TvOpt::JumpSmall, TvOpt::JumpMedium, TvOpt::JumpLarge },
@@ -761,6 +765,10 @@ namespace
             case TvOpt::HoldOk: return L"Holding OK on the bar opens a page; a short OK acts when let go";
             case TvOpt::BackAction: return L"What Back / Esc does when no menu or bar is showing";
             case TvOpt::ResumeLast: return L"Started without a file: carry on with the last one if it was stopped part-way";
+            case TvOpt::RememberFilePos: return L"MPC-HC carries on where a file was stopped (off if a media server handles resume)";
+            case TvOpt::LaunchFullscreen: return L"Files open in fullscreen";
+            case TvOpt::ExitFullscreenAtEnd: return L"Back to the window when a file has played to the end";
+            case TvOpt::AfterPlayback: return L"What happens when a file has played to the end";
             case TvOpt::SkipBackSec: return L"How far the skip back button goes";
             case TvOpt::SkipFwdSec: return L"How far the skip forward button goes";
             case TvOpt::ShowOnSeek: return L"What Left / Right show while seeking during playback";
@@ -5693,6 +5701,7 @@ void CTvMenu::BuildRowsContent()
                         (opt == TvOpt::SmoothPlayhead && CTvMode::AnimScale() <= 0.0f) || // Animations Off: no glide
                         (opt == TvOpt::SmoothScrub && InstantSeek()) ||                   // jumps at once: no preview
                         (opt == TvOpt::PauseScreen && !CTvMode::IsOn(TvOpt::PauseScreenOn)) || // pause screen off
+                        (opt == TvOpt::ResumeLast && !CTvMode::IsOn(TvOpt::RememberFilePos)) || // no positions kept
                         (opt == TvOpt::WrapWhileHeld && !CTvMode::IsOn(TvOpt::WrapAround))) {   // no wrapping at all
                         r.faded = true;
                     }

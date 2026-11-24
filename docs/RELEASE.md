@@ -31,7 +31,9 @@ What TV mode adds, in short:
   Advanced (mouse: MPC-HC options, madVR / LAV settings windows), Desktop Mode.
 - **TV options**: Appearance (accent colour, font, opacity, menu and bar size, key hints, menu
   auto-close, animations, where the overlay is drawn), Control bar (when it shows, what's on it, its
-  buttons: show / hide, order, separators you can add / move / remove), Seeking, Audio and subtitles (including a cut-down subtitle style
+  buttons: show / hide, order, separators you can add / move / remove), Player (resume the last file
+  on start, pause screen, Back with nothing open, and MPC-HC's own remember file position, open in
+  fullscreen, leave fullscreen at the end and after playback, read and written live), Seeking, Audio and subtitles (including a cut-down subtitle style
   page), Remote keys (assign keys by pressing them; grouped: TV menu, playback, jumps, audio, subtitles,
   picture, player). Each row offers Set, Set hold (0.6 s; OK can be held too), Edit (the keys as tags,
   OK removes the picked one; only with two or more keys) and Clear, with the current keys beside them.
@@ -157,7 +159,7 @@ display stays at a high refresh rate (e.g. 120 Hz) during playback.
 - The madVR row only appears while madVR is the renderer.
 
 ### Control bar extras (each can be turned off in TV options)
-- **Pause screen** (Control bar > "Pause screen" switch, and "Pause screen after" for the delay): a card with the title, time and
+- **Pause screen** (Player > "Pause screen" switch, and "Pause screen after" for the delay): a card with the title, time and
   "Ends at" after a few seconds paused. OK plays, Back hides it, arrows or the mouse bring the bar back.
 - **Hold OK on the bar** (Control bar, Off / Opens Info / Opens Settings): when on, a short OK acts when
   the key is let go (a fraction of a second later than before). Remote software that only sends key
@@ -276,7 +278,7 @@ already exist it reads "(overrides some of your current settings to work best wi
   40 % opacity, no shadow, 20 from the bottom). The 60 % is deliberate: full white is too bright on projectors and
   HDR displays. Users who want it brighter raise Subtitles > Style > Text opacity.
 - TV Mode on, with the TV layout (caption and menu bar, no toolbars).
-- TV option Control bar > **Resume the last file on start** on (off without the installer).
+- TV option Player > **Resume the last file on start** on (off without the installer).
 
 View > Presets also has **TV** (key 5: TV Mode with caption and menu) and **TV Minimal** (key 6: TV
 Mode, borderless like Minimal). Plain 5 and 6 were unused in MPC-HC's key list. The TV Settings panel
@@ -284,7 +286,7 @@ ends with **Exit** (closes the player, as File > Exit) under "Switch to Desktop 
 file loaded, a click on the empty player (the logo) opens the last file from MPC-HC's recent files;
 with no recent file (or history off) it opens File > Quick Open.
 
-- **Resume the last file on start** (TV option, Control bar): when the player starts in TV Mode with
+- **Resume the last file on start** (TV option, Player): when the player starts in TV Mode with
   nothing to play (no file, disc or device on the command line, no `/slave` or `/add`, no other player
   window open), it opens the most recent file of MPC-HC's recent files, but only if MPC-HC kept a
   position for it. MPC-HC forgets the position when a file plays to the end, keeps none with "remember
@@ -294,7 +296,7 @@ with no recent file (or history off) it opens File > Quick Open.
   file is never affected. The stream address of a media server counts as a recent file too, so a film
   stopped part-way in Emby resumes through that address (outside Emby's own tracking).
 
-- **Back with nothing open** (Esc, Backspace, Browser Back or the extra Back key): TV option Control bar
+- **Back with nothing open** (Esc, Backspace, Browser Back or the extra Back key): TV option Player
   > "Back with nothing open": **Opens the power menu** (default; Exit, Enter / Exit fullscreen, Restart
   player), **Exits fullscreen** (MPC-HC's own; windowed, the key does what MPC-HC has on it) or **Exits
   the player**. Restart player starts the player again with the same file at the same place (and
@@ -340,7 +342,7 @@ with no recent file (or history off) it opens File > Quick Open.
 
 **Note for Emby / Jellyfin / Plex users:** "remember file position" makes MPC-HC resume files itself.
 If your media server handles resume (it passes the start position to the player), untick the box or
-turn Options > Player > History > "Remember File position" off afterwards, or both will try to resume.
+turn Options > Player > History > "Remember File position" (or TV options > Player > Remember file position) off afterwards, or both will try to resume.
 
 ---
 

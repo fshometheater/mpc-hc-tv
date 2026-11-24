@@ -91,6 +91,37 @@ namespace
         }
     }
 
+    // MPC-HC's own player settings shown under TV options > Player: read into / written from v.
+    // False for every other option.
+    bool PlayerSetting(TvOpt opt, int* get, const int* set)
+    {
+        auto& s = AfxGetAppSettings();
+        auto flag = [&](bool& b) {
+            if (get) {
+                *get = b ? 1 : 0;
+            }
+            if (set) {
+                b = *set != 0;
+            }
+            return true;
+        };
+        switch (opt) {
+            case TvOpt::LaunchFullscreen: return flag(s.fLaunchfullscreen);
+            case TvOpt::RememberFilePos: return flag(s.fRememberFilePos);
+            case TvOpt::ExitFullscreenAtEnd: return flag(s.fExitFullScreenAtTheEnd);
+            case TvOpt::AfterPlayback:
+                if (get) {
+                    *get = static_cast<int>(s.eAfterPlayback);
+                }
+                if (set) {
+                    s.eAfterPlayback = static_cast<CAppSettings::AfterPlayback>(*set);
+                }
+                return true;
+            default:
+                return false;
+        }
+    }
+
     struct OptionDef {
         LPCTSTR key;
         LPCWSTR label;
@@ -188,6 +219,9 @@ namespace
     const LPCWSTR kSeekModeNames[] = { L"After a short pause", L"Right away", L"After OK" }; // 2: the preview waits for OK (Back cancels)
     const LPCWSTR kHoldOkNames[] = { L"Off", L"Opens Info", L"Opens Settings" };
     const LPCWSTR kBackActionNames[] = { L"Opens the power menu", L"Exits fullscreen", L"Exits the player" };
+    // in the order of MPC-HC's AfterPlayback values
+    const LPCWSTR kAfterPlaybackNames[] = { L"Do nothing", L"Play the next file in the folder", L"Go back to the start",
+                                            L"Turn the display off", L"Close the file", L"Exit the player" };
 
     CStringW NamedValue(TvOpt opt, int v)
     {
@@ -213,6 +247,8 @@ namespace
                 return pick(kHoldOkNames, _countof(kHoldOkNames));
             case TvOpt::BackAction:
                 return pick(kBackActionNames, _countof(kBackActionNames));
+            case TvOpt::AfterPlayback:
+                return pick(kAfterPlaybackNames, _countof(kAfterPlaybackNames));
             case TvOpt::BackgroundColour:
                 return v == CTvMode::kCustomBackground ? CStringW(L"Custom")
                                                        : CStringW(kBackgrounds[std::clamp(v, 0, static_cast<int>(_countof(kBackgrounds)) - 1)].name);
@@ -472,6 +508,11 @@ namespace
             // MPC-HC's own default: 20 (in the subtitle's own units, not screen pixels)
             { nullptr, L"Distance from bottom", Fmt::Pixels, 20, Range(0, 150, 5) },
             { nullptr, L"Position relative to", Fmt::Named, 2 /* Auto */, { 0, 1, 2 } },
+            // MPC-HC's own player settings (no key: read and written live, see PlayerSetting); defaults = MPC-HC's
+            { nullptr, L"Open files in fullscreen", Fmt::OnOff, 0, { 0, 1 } },
+            { nullptr, L"Remember file position", Fmt::OnOff, 0, { 0, 1 } },
+            { nullptr, L"Leave fullscreen at the end", Fmt::OnOff, 1, { 0, 1 } },
+            { nullptr, L"After playback", Fmt::Named, 0, Range(0, _countof(kAfterPlaybackNames) - 1, 1) },
         };
         static_assert(_countof(defs) == static_cast<size_t>(TvOpt::Count), "one definition per TvOpt");
         return defs[static_cast<size_t>(opt)];
@@ -693,6 +734,9 @@ int CTvMode::Get(TvOpt opt)
     if (int* jump = JumpDistance(opt)) {
         return *jump; // MPC-HC's own value (ms), may be off the choice list too
     }
+    if (int v = 0; PlayerSetting(opt, &v, nullptr)) {
+        return v; // MPC-HC's own setting
+    }
     const OptionDef& d = Def(opt);
     const int v = GetInt(d.key, d.def);
     // Only values from the list are valid; anything else (hand-edited ini) means default.
@@ -732,6 +776,9 @@ void CTvMode::Step(TvOpt opt, int dir)
     if (int* jump = JumpDistance(opt)) {
         *jump = d.choices[pos]; // used by MPC-HC's next jump; saved with its settings
         return;
+    }
+    if (PlayerSetting(opt, nullptr, &d.choices[pos])) {
+        return; // MPC-HC's own setting: used from the next file on, saved with its settings
     }
     SetInt(d.key, d.choices[pos]);
 }

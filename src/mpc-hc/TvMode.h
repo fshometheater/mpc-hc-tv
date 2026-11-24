@@ -88,6 +88,12 @@ enum class TvOpt {
     SubShadowOpacity,
     SubMargin,       // distance from the bottom (bottom margin)
     SubRelativeTo,   // Window / Video / Auto
+    // MPC-HC's own player settings, read and written live (TV options > Player); not stored in the
+    // TvMode section, saved with MPC-HC's settings
+    LaunchFullscreen,    // Options > Playback > Fullscreen: open files in fullscreen
+    RememberFilePos,     // Options > Player > History: remember file position
+    ExitFullscreenAtEnd, // Options > Playback > Fullscreen: leave fullscreen at the end
+    AfterPlayback,       // Play > After playback (MPC-HC's AfterPlayback values)
     Count
 };
 
@@ -100,7 +106,8 @@ inline bool IsSubtitleStyleOpt(TvOpt opt)
 // True for options that live in MPC-HC's own settings (not the TvMode section).
 inline bool IsMpcSettingOpt(TvOpt opt)
 {
-    return IsSubtitleStyleOpt(opt) || opt == TvOpt::JumpSmall || opt == TvOpt::JumpMedium || opt == TvOpt::JumpLarge;
+    return IsSubtitleStyleOpt(opt) || opt == TvOpt::JumpSmall || opt == TvOpt::JumpMedium || opt == TvOpt::JumpLarge ||
+           (opt >= TvOpt::LaunchFullscreen && opt <= TvOpt::AfterPlayback);
 }
 
 // Switching between TV Mode and Desktop Mode, and the TV options.

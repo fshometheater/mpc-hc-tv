@@ -9951,8 +9951,13 @@ void CTvMenu::RestartPlayer()
     if (pMF->IsFullScreenMode()) {
         args += L" /fullscreen";
     }
-    CStringW cmd;
-    cmd.Format(L"cmd.exe /d /c ping -n 3 127.0.0.1 >nul & start \"\" \"%s\" %s", exe, args.GetString());
+    // The player and its arguments reach cmd through an environment variable: cmd expands it once and
+    // doesn't look into the result again, so a % in a file name or web address stays as it is (and an &
+    // stays inside its quotes).
+    CStringW start;
+    start.Format(L"\"%s\" %s", exe, args.GetString());
+    SetEnvironmentVariableW(L"MPCHC_TV_RESTART", start); // inherited by cmd; this player exits right after
+    CStringW cmd = L"cmd.exe /d /c ping -n 3 127.0.0.1 >nul & start \"\" %MPCHC_TV_RESTART%";
     STARTUPINFOW si = { sizeof(si) };
     PROCESS_INFORMATION pi = {};
     if (CreateProcessW(nullptr, cmd.GetBuffer(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
@@ -9960,6 +9965,7 @@ void CTvMenu::RestartPlayer()
         CloseHandle(pi.hProcess);
     }
     cmd.ReleaseBuffer();
+    SetEnvironmentVariableW(L"MPCHC_TV_RESTART", nullptr);
     ForceClose();
     pMF->PostMessage(WM_COMMAND, ID_FILE_EXIT);
 }

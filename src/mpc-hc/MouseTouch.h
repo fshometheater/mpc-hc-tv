@@ -51,6 +51,7 @@ public:
     static bool CursorOnWindow(const CPoint& screenPoint, const CWnd& wnd);
 
     bool Dragging();
+    void HideCursorNow(); // TV MODE: hide the cursor at once (until the mouse moves), not after the timeout
 
     CMouse& operator=(const CMouse&) = delete;
 

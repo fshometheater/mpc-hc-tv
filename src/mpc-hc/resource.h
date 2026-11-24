@@ -1905,6 +1905,23 @@
 #define IDS_MODERN_THEME_STYLE_WINDOWS10 58060
 #define IDS_MODERN_THEME_STYLE_WINDOWS11 58061
 #define IDS_PPAGEADVANCED_SUB_GLYPH_CACHE_MB 58062
+// TV MODE: commands and their names (IDs chosen outside every existing value and range)
+#define ID_TV_MENU                      36100
+#define ID_TV_AUDIO                     36101
+#define ID_TV_SUBTITLES                 36102
+#define ID_TV_MODE                      36103
+#define ID_TV_MODE_APPLY                36104
+#define ID_TV_MODE_APPLY_SAVE           36105
+#define ID_VIEW_PRESETS_TV              36106
+#define ID_VIEW_PRESETS_TV_MINIMAL      36107
+#define IDS_TV_MENU                     24900
+#define IDS_TV_AUDIO                    24901
+#define IDS_TV_SUBTITLES                24902
+#define IDS_TV_MODE                     24903
+#define IDS_TV_PRESET                   24904
+#define IDS_TV_PRESET_MINIMAL           24905
+#define IDF_LOGO_TV                     24910
+#define IDF_LOGO_TV_BLANK               24911
 
 // Next default values for new objects
 // 

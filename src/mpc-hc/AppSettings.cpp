@@ -41,6 +41,7 @@
 #include "../VideoRenderers/MPCVRAllocatorPresenter.h"
 #include "GPUInfo.h"
 #include "FGFilterLAV.h"
+#include "TvMode.h" // TV MODE
 #include <chrono>
 
 std::map<DWORD, const wmcmd_base*> CAppSettings::CommandIDToWMCMD;
@@ -798,6 +799,15 @@ static constexpr wmcmd_base default_wmcmds[] = {
 
     { ID_PLAYLIST_TOGGLE_SHUFFLE,           0, 0,                 IDS_PLAYLIST_TOGGLE_SHUFFLE },
     { ID_AUDIOSHIFT_ONOFF,                  0, 0,                 IDS_AUDIOSHIFT_ONOFF },
+
+    // TV MODE: no default keys; only act when started with /tv
+    { ID_TV_MENU,                           0, 0,                 IDS_TV_MENU },
+    { ID_TV_AUDIO,                          0, 0,                 IDS_TV_AUDIO },
+    { ID_TV_SUBTITLES,                      0, 0,                 IDS_TV_SUBTITLES },
+    { ID_TV_MODE,                           0, 0,                 IDS_TV_MODE },
+    // TV MODE: View > Presets > TV / TV Minimal, next to MPC-HC's presets on 1-4 (plain 5 and 6 were free)
+    { ID_VIEW_PRESETS_TV,                 '5', 0,                 IDS_TV_PRESET },
+    { ID_VIEW_PRESETS_TV_MINIMAL,         '6', 0,                 IDS_TV_PRESET_MINIMAL },
 };
 
 void CAppSettings::CreateCommands()
@@ -1938,6 +1948,7 @@ void CAppSettings::LoadSettings()
         subtitlesDefStyle <<= temp;
         if (temp.IsEmpty()) { // Position the text subtitles relative to the video frame by default
             subtitlesDefStyle.relativeTo = STSStyle::AUTO;
+            CTvMode::SubtitleStyleDefaults(subtitlesDefStyle); // TV MODE: this build's default subtitle look
         }
     }
     bSubtitleRoundedOpaqueBox = !!pApp->GetProfileInt(IDS_R_SETTINGS, IDS_RS_SPROUNDEDOPAQUEBOX, FALSE);
@@ -2474,6 +2485,9 @@ void CAppSettings::LoadSettings()
         }
     }
 
+    if (CTvMode::RecommendedPending()) { // TV MODE: the installer's TV box; before the theme is chosen
+        CTvMode::ApplyRecommendedSettings(*this);
+    }
     UpdateThemeState();
 
     if (fLaunchfullscreen && slFiles.GetCount() > 0) {
@@ -2869,6 +2883,8 @@ void CAppSettings::ParseCommandLine(CAtlList<CString>& cmdln)
             } else if (sw == _T("startpos") && pos) {
                 rtStart = 10000i64 * ConvertTimeToMSec(cmdln.GetNext(pos));
                 nCLSwitches |= CLSW_STARTVALID;
+            } else if (sw == _T("tv")) { // TV MODE
+                bTvMode = true;
             } else if (sw == _T("nofocus")) {
                 nCLSwitches |= CLSW_NOFOCUS;
             } else if (sw == _T("close")) {

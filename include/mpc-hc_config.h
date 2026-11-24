@@ -31,10 +31,13 @@
 #endif
 #endif
 
-#define WEBSITE_URL  _T("https://github.com/clsid2/mpc-hc/releases")
-#define DOWNLOAD_URL _T("https://github.com/clsid2/mpc-hc/releases")
-#define UPDATE_URL   _T("https://github.com/clsid2/mpc-hc/raw/develop/version.txt")
-#define BACKUP_UPDATE_URL   _T("https://cdn.jsdelivr.net/gh/clsid2/mpc-hc@develop/version.txt")
+// TV MODE: this fork's own home, releases and update check (the repository's tv-mode branch). The
+// repository is private for now, so the check fails quietly until it is public; it is off by default.
+#define WEBSITE_URL  _T("https://github.com/fshometheater/mpc-hc-tv/releases")
+#define DOWNLOAD_URL _T("https://github.com/fshometheater/mpc-hc-tv/releases")
+// version-tv.txt holds the latest MPC-HC TV version (include\version_tv.h), e.g. 0.1.0.0; version.txt stays upstream's
+#define UPDATE_URL   _T("https://github.com/fshometheater/mpc-hc-tv/raw/tv-mode/version-tv.txt")
+#define BACKUP_UPDATE_URL   _T("https://cdn.jsdelivr.net/gh/fshometheater/mpc-hc-tv@tv-mode/version-tv.txt")
 #define TRAC_URL     _T("https://github.com/clsid2/mpc-hc/issues")
 #define BUGS_URL     _T("https://github.com/clsid2/mpc-hc/issues")
 

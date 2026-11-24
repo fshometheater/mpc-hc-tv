@@ -143,6 +143,20 @@ void CMouse::StartMouseHider(const CPoint& screenPoint)
     }
     m_dwMouseHiderStartTick = GetTickCount64();
 }
+// TV MODE: a file opened in TV Mode hides the cursor right away when it's over the video (it used
+// to sit in the middle of the picture until the hide timeout); moving the mouse shows it again.
+void CMouse::HideCursorNow()
+{
+    CPoint screenPoint;
+    if (m_pMainFrame->IsInteractiveVideo() || !GetCursorPos(&screenPoint) || !CursorOnWindow(screenPoint, GetWnd())) {
+        return;
+    }
+    StopMouseHider();
+    m_cursor = Cursor::NONE;
+    m_hideCursorPoint = screenPoint;
+    ::SetCursor(m_cursors[m_cursor]);
+}
+
 void CMouse::StopMouseHider()
 {
     auto t = m_bD3DFS ? CMainFrame::TimerHiderSubscriber::CURSOR_HIDER_D3DFS : CMainFrame::TimerHiderSubscriber::CURSOR_HIDER;

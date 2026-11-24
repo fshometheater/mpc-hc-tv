@@ -1619,9 +1619,12 @@ BEGIN
             MENUITEM "&Compact",                    ID_VIEW_PRESETS_COMPACT
             MENUITEM "&Normal",                     ID_VIEW_PRESETS_NORMAL
             MENUITEM "C&ustom",                     ID_VIEW_PRESETS_CUSTOM
+            MENUITEM "&TV",                         ID_VIEW_PRESETS_TV
+            MENUITEM "TV M&inimal",               ID_VIEW_PRESETS_TV_MINIMAL
         END
         MENUITEM SEPARATOR
         MENUITEM "F&ull Screen",                ID_VIEW_FULLSCREEN
+        MENUITEM "T&V Mode",                   ID_TV_MODE
         POPUP "&Zoom"
         BEGIN
             MENUITEM "&25%",                        ID_VIEW_ZOOM_25
@@ -1916,6 +1919,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "F&ull Screen",                ID_VIEW_FULLSCREEN
+        MENUITEM "T&V Mode",                   ID_TV_MODE
         POPUP "&Zoom"
         BEGIN
             MENUITEM "&25%",                        ID_VIEW_ZOOM_25
@@ -2040,6 +2044,8 @@ BEGIN
                 MENUITEM "&Compact",                    ID_VIEW_PRESETS_COMPACT
                 MENUITEM "&Normal",                     ID_VIEW_PRESETS_NORMAL
                 MENUITEM "C&ustom",                     ID_VIEW_PRESETS_CUSTOM
+                MENUITEM "&TV",                         ID_VIEW_PRESETS_TV
+                MENUITEM "TV M&inimal",               ID_VIEW_PRESETS_TV_MINIMAL
             END
         END
         POPUP "R&enderer Settings"
@@ -2162,9 +2168,12 @@ BEGIN
                 MENUITEM "&Compact",                    ID_VIEW_PRESETS_COMPACT
                 MENUITEM "&Normal",                     ID_VIEW_PRESETS_NORMAL
                 MENUITEM "C&ustom",                     ID_VIEW_PRESETS_CUSTOM
+                MENUITEM "&TV",                         ID_VIEW_PRESETS_TV
+                MENUITEM "TV M&inimal",               ID_VIEW_PRESETS_TV_MINIMAL
             END
             MENUITEM SEPARATOR
             MENUITEM "F&ull Screen",                ID_VIEW_FULLSCREEN
+            MENUITEM "T&V Mode",                   ID_TV_MODE
             POPUP "&Zoom"
             BEGIN
                 MENUITEM "&25%",                        ID_VIEW_ZOOM_25
@@ -3037,6 +3046,12 @@ BEGIN
                             "Insert deinterlace filter (blend) in capture mode"
     IDS_PLAYLIST_TOGGLE_SHUFFLE "Toggle Playlist Shuffle"
     IDS_AUDIOSHIFT_ONOFF    "Toggle Audio Delay"
+    IDS_TV_MENU             "TV Mode: Menu"
+    IDS_TV_AUDIO            "TV Mode: Audio List"
+    IDS_TV_SUBTITLES        "TV Mode: Subtitle List"
+    IDS_TV_MODE             "TV Mode: On/Off"
+    IDS_TV_PRESET           "View Preset: TV"
+    IDS_TV_PRESET_MINIMAL   "View Preset: TV Minimal"
 END
 
 STRINGTABLE

@@ -290,7 +290,7 @@ struct AutoChangeFullscreenMode {
     unsigned                    uDelay = 0u;
 };
 
-#define ACCEL_LIST_SIZE 207
+#define ACCEL_LIST_SIZE 211 // TV MODE: +4 (upstream 207)
 
 struct wmcmd_base : public ACCEL {
     BYTE mouse;
@@ -564,6 +564,7 @@ class CAppSettings
 public:
     // cmdline params
     UINT64 nCLSwitches;
+    bool bTvMode = false; // TV MODE: set by the /tv command-line switch
     CAtlList<CString>   slFiles, slDubs, slSubs, slFilters;
     static std::map<DWORD, const wmcmd_base*> CommandIDToWMCMD;
 

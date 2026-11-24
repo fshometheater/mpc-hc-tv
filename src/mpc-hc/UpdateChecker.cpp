@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "mpc-hc_config.h"
+#include "version_tv.h" // TV MODE
 #include "VersionInfo.h"
 #include "UpdateChecker.h"
 #include "UpdateCheckerDlg.h"
@@ -30,11 +31,12 @@
 
 #include <afxinet.h>
 
+// TV MODE: the update check compares MPC-HC TV's own version (include\version_tv.h) with version-tv.txt
 const Version UpdateChecker::MPC_HC_VERSION = {
-    VersionInfo::GetMajorNumber(),
-    VersionInfo::GetMinorNumber(),
-    VersionInfo::GetPatchNumber(),
-    VersionInfo::GetRevisionNumber()
+    MPC_TV_VERSION_MAJOR,
+    MPC_TV_VERSION_MINOR,
+    MPC_TV_VERSION_PATCH,
+    0
 };
 const LPCTSTR UpdateChecker::MPC_HC_UPDATE_URL = UPDATE_URL;
 
@@ -226,7 +228,9 @@ bool UpdateChecker::IsAutoUpdateEnabled()
     int& status = AfxGetAppSettings().nUpdaterAutoCheck;
 
     if (status == AUTOUPDATE_UNKNOWN) { // First run
-        status = (AfxMessageBox(IDS_UPDATE_CONFIG_AUTO_CHECK, MB_ICONQUESTION | MB_YESNO, 0) == IDYES) ? AUTOUPDATE_ENABLE : AUTOUPDATE_DISABLE;
+        // TV MODE: no question on the first start; the installer has the option (off by default),
+        // and Options > Miscellaneous can turn it on later
+        status = AUTOUPDATE_DISABLE;
     }
 
     return (status == AUTOUPDATE_ENABLE);

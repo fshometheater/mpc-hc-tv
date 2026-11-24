@@ -255,6 +255,10 @@ private:
     friend class CFullscreenWnd; // for accessing m_controls.DelayShowNotLoaded()
     friend class CMouseWndWithArtView; // for accessing m_controls.DelayShowNotLoaded()
     friend class SubtitlesProvider;
+    friend class CTvMenu; // TV MODE: reads m_pGB, m_wndView, m_OSD
+    friend class CTvTracks; // TV MODE: reads track lists, calls the player's own track setters
+    friend class CTvMode; // TV MODE: hides / restores bars, caption and playlist
+    friend class CTvInfo; // TV MODE: reads the graph, the current file and the video window for the info panels
 
     // TODO: wrap these graph objects into a class to make it look cleaner
 
@@ -1111,6 +1115,8 @@ public:
     afx_msg void OnStreamSubOnOff();
     afx_msg void OnSubtitlesAutoCopy();
     afx_msg void OnAudioShiftOnOff();
+    afx_msg void OnTvCommand(UINT nID); // TV MODE
+    afx_msg void OnUpdateTvMode(CCmdUI* pCmdUI); // TV MODE
     afx_msg void OnDvdAngle(UINT nID);
     afx_msg void OnDvdAudio(UINT nID);
     afx_msg void OnDvdSub(UINT nID);

@@ -625,6 +625,27 @@
     <ClCompile Include="OSD.cpp">
       <Filter>Main View</Filter>
     </ClCompile>
+    <ClCompile Include="TvMenu.cpp">
+      <Filter>Main View</Filter>
+    </ClCompile>
+    <ClCompile Include="TvTracks.cpp">
+      <Filter>Main View</Filter>
+    </ClCompile>
+    <ClCompile Include="TvMode.cpp">
+      <Filter>Main View</Filter>
+    </ClCompile>
+    <ClCompile Include="TvInfo.cpp">
+      <Filter>Main View</Filter>
+    </ClCompile>
+    <ClCompile Include="TvProbe.cpp">
+      <Filter>Main View</Filter>
+    </ClCompile>
+    <ClCompile Include="TvScopes.cpp">
+      <Filter>Main View</Filter>
+    </ClCompile>
+    <ClCompile Include="TvOsdWindow.cpp">
+      <Filter>Main View</Filter>
+    </ClCompile>
     <ClCompile Include="WicUtils.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
@@ -1222,6 +1243,30 @@
     </ClInclude>
     <ClInclude Include="RarEntrySelectorDialog.h" />
     <ClInclude Include="OSD.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvMenu.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvTracks.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvMode.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvInfo.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvProbe.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvScopes.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvOsdWindow.h">
+      <Filter>Main View</Filter>
+    </ClInclude>
+    <ClInclude Include="TvNvApi.h">
       <Filter>Main View</Filter>
     </ClInclude>
     <ClInclude Include="WicUtils.h">

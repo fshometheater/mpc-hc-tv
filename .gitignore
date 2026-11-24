@@ -45,3 +45,9 @@ ipch
 
 # LAV Filters MSVC regeneration scratch build (msvc/regen/regen.cmd)
 /src/thirdparty/LAVFilters/msvc/regen/build/
+
+# TV MODE: private notes live in a separate private repository, never in this one
+/CLAUDE.md
+/docs/handoff.md
+/docs/tv-mode-notes.md
+/reference/

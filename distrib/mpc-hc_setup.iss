@@ -60,6 +60,11 @@
 #endif
 
 #define app_vername     = app_name + " " + app_ver
+; TV MODE: shown as "MPC-HC 2.8.5 TV 0.1.0" (include\version_tv.h); app_ver stays MPC-HC's for upgrades
+#include "..\include\version_tv.h"
+#define base_ver        str(MPC_VERSION_MAJOR) + "." + str(MPC_VERSION_MINOR) + "." + str(MPC_VERSION_PATCH)
+#define tv_ver          str(MPC_TV_VERSION_MAJOR) + "." + str(MPC_TV_VERSION_MINOR) + "." + str(MPC_TV_VERSION_PATCH)
+#define app_vername     = app_name + " " + base_ver + " TV " + tv_ver
 #define quick_launch    "{userappdata}\Microsoft\Internet Explorer\Quick Launch"
 
 #define base_bindir     = "..\bin"
@@ -69,7 +74,7 @@
   #define mpchc_exe     = "mpc-hc64.exe"
   #define mpchc_ini     = "mpc-hc64.ini"
   #define lavfiltersdir = "LAVFilters64"
-  #define OutFilename   = app_name + "." + app_ver + ".x64"
+  #define OutFilename   = app_name + "-" + base_ver + "-TV-" + tv_ver + "-x64"
   #define platform      = "x64"
   #define mpcvr_ax      = "MpcVideoRenderer64.ax"
   #define mediainfo_dll = "..\distrib\x64\MediaInfo.dll"
@@ -78,7 +83,7 @@
   #define mpchc_exe     = "mpc-hc.exe"
   #define mpchc_ini     = "mpc-hc.ini"
   #define lavfiltersdir = "LAVFilters"
-  #define OutFilename   = app_name + "." + app_ver + ".x86"
+  #define OutFilename   = app_name + "-" + base_ver + "-TV-" + tv_ver + "-x86"
   #define platform      = "x86"
   #define mpcvr_ax      = "MpcVideoRenderer.ax"
   #define mediainfo_dll = "..\distrib\x86\MediaInfo.dll"
@@ -115,8 +120,14 @@
 #ifdef x64Build
   #define FullAppNameVer = FullAppNameVer + " " + "(64-bit)"
 #endif
+; TV MODE: the plain name in Windows' app list ("MPC-HC 2.8.5 TV 0.1.0 (64-bit)"), no nightly hash / date
+#ifdef x64Build
+  #define FullAppNameVer = app_vername + " (64-bit)"
+#else
+  #define FullAppNameVer = app_vername
+#endif
 
-#ifexist "..\distrib\mpcvr\MpcVideoRenderer.ax"
+#ifexist "..\distrib\mpcvr\" + mpcvr_ax
 #define INCLUDE_MPCVR = true
 #else
 #define INCLUDE_MPCVR = false
@@ -243,6 +254,14 @@ Name: desktopicon\user;   Description: {cm:tsk_CurrentUser};       GroupDescript
 Name: desktopicon\common; Description: {cm:tsk_AllUsers};          GroupDescription: {cm:AdditionalIcons}; Flags: unchecked exclusive
 Name: quicklaunchicon;    Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked;             OnlyBelowVersion: 6.01
 Name: reset_settings;     Description: {cm:tsk_ResetSettings};     GroupDescription: {cm:tsk_Other};       Flags: checkedonce unchecked; Check: SettingsExist()
+; TV MODE: "Recommended TV settings" (TV Mode with caption and menu, fullscreen, history and positions remembered,
+; TV subtitle style). Ticked by default, also where player settings already exist;
+; both labels say that some settings are overridden to work best with TV Mode.
+Name: tv_recommended;          Description: "Apply recommended TV settings (overrides some player settings to work best with TV Mode)";       GroupDescription: "TV Mode:"; Check: not SettingsExist()
+Name: tv_recommended_existing; Description: "Apply recommended TV settings (overrides some of your current settings to work best with TV Mode)"; GroupDescription: "TV Mode:"; Check: SettingsExist()
+; TV MODE: the update check (fshometheater/mpc-hc-tv), instead of MPC-HC's question on the first start. Off by
+; default; unticked leaves the current setting alone (never set = off), Options > Miscellaneous changes it later.
+Name: tv_updates;              Description: "Check for MPC-HC TV updates automatically (once a week)";                                         GroupDescription: "TV Mode:"; Flags: unchecked
 
 
 [Files]
@@ -529,6 +548,22 @@ begin
         SetIniInt('Settings', 'InterfaceLanguage', iLanguage, ExpandConstant('{app}\{#mpchc_ini}'))
       else
         RegWriteDWordValue(HKCU, 'Software\MPC-HC\MPC-HC\Settings', 'InterfaceLanguage', iLanguage);
+    end;
+
+    // TV MODE: ask the player to apply the recommended TV settings on its next start
+    if IsTaskSelected('tv_recommended') or IsTaskSelected('tv_recommended_existing') then begin
+      if FileExists(ExpandConstant('{app}\{#mpchc_ini}')) then
+        SetIniInt('TvMode', 'ApplyRecommended', 1, ExpandConstant('{app}\{#mpchc_ini}'))
+      else
+        RegWriteDWordValue(HKCU, 'Software\MPC-HC\MPC-HC\TvMode', 'ApplyRecommended', 1);
+    end;
+
+    // TV MODE: turn the update check on (Settings\UpdaterAutoCheck = 1, as Options > Miscellaneous)
+    if IsTaskSelected('tv_updates') then begin
+      if FileExists(ExpandConstant('{app}\{#mpchc_ini}')) then
+        SetIniInt('Settings', 'UpdaterAutoCheck', 1, ExpandConstant('{app}\{#mpchc_ini}'))
+      else
+        RegWriteDWordValue(HKCU, 'Software\MPC-HC\MPC-HC\Settings', 'UpdaterAutoCheck', 1);
     end;
   end;
 

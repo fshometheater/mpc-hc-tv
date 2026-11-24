@@ -24,6 +24,8 @@
 #include "MainFrm.h"
 #include "mplayerc.h"
 #include "version.h"
+#include "TvMenu.h" // TV MODE
+#include "TvMode.h" // TV MODE
 
 #include "GraphThread.h"
 #include "FGFilterLAV.h"
@@ -345,6 +347,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
     ON_COMMAND_RANGE(ID_STREAM_AUDIO_NEXT, ID_STREAM_AUDIO_PREV, OnStreamAudio)
     ON_COMMAND_RANGE(ID_STREAM_SUB_NEXT, ID_STREAM_SUB_PREV, OnStreamSub)
     ON_COMMAND(ID_AUDIOSHIFT_ONOFF, OnAudioShiftOnOff)
+    ON_COMMAND_RANGE(ID_TV_MENU, ID_VIEW_PRESETS_TV_MINIMAL, OnTvCommand) // TV MODE
+    ON_UPDATE_COMMAND_UI(ID_TV_MODE, OnUpdateTvMode) // TV MODE
+    ON_UPDATE_COMMAND_UI(ID_VIEW_PRESETS_TV, OnUpdateTvMode) // TV MODE
     ON_COMMAND(ID_STREAM_SUB_ONOFF, OnStreamSubOnOff)
     ON_COMMAND(ID_SUBTITLES_AUTOCOPY, OnSubtitlesAutoCopy)
     ON_COMMAND_RANGE(ID_DVD_ANGLE_NEXT, ID_DVD_ANGLE_PREV, OnDvdAngle)
@@ -1199,6 +1204,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         m_media_trans_control.Init(this);
     }
 
+    CTvMode::OnMainFrameCreated(this); // TV MODE: restore the last mode / honour /tv
+
     return 0;
 }
 
@@ -1679,6 +1686,10 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
+    if (CTvMenu::Instance().PreTranslateMessage(this, pMsg)) { // TV MODE: inert without /tv
+        return TRUE;
+    }
+
     if (pMsg->message == WM_KEYDOWN) {
         if (pMsg->wParam == VK_ESCAPE) {
             bool fEscapeNotAssigned = !AssignedToCmd(VK_ESCAPE);
@@ -1734,6 +1745,20 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
     }
 
     return __super::PreTranslateMessage(pMsg);
+}
+
+void CMainFrame::OnTvCommand(UINT nID) // TV MODE: TV overlay commands (inert outside TV Mode) and the mode switch
+{
+    if (nID >= ID_TV_MODE) {
+        CTvMode::OnCommand(this, nID);
+    } else {
+        CTvMenu::Instance().OnCommand(this, nID);
+    }
+}
+
+void CMainFrame::OnUpdateTvMode(CCmdUI* pCmdUI) // TV MODE
+{
+    CTvMode::OnUpdateCommand(pCmdUI);
 }
 
 void CMainFrame::RecalcLayout(BOOL bNotify)
@@ -4269,6 +4294,8 @@ BOOL CMainFrame::OnMenu(CMenu* pMenu)
         return FALSE; //prevent crash when player closes with context menu open
     }
 
+    CTvMenu::Instance().PrepareContextMenu(this, pMenu); // TV MODE: "Show control bar" fallback
+
     m_pActiveContextMenu = pMenu;
 
     {
@@ -4768,6 +4795,8 @@ LRESULT CMainFrame::OnFilePostOpenmedia(WPARAM wParam, LPARAM lParam)
             PostMessage(WM_CLOSE);
         }
     }
+
+    CTvMenu::Instance().OnMediaLoaded(this); // TV MODE: "show controls when playback starts"
 
     return 0;
 }
@@ -10166,6 +10195,7 @@ void CMainFrame::OnPlayPause()
     m_OSD.DisplayMessage(OSD_TOPLEFT, strOSD, 3000);
     m_Lcd.SetStatusMessage(ResStr(IDS_CONTROLS_PAUSED), 3000);
     SetPlayState(PS_PAUSE);
+    CTvMenu::Instance().OnPaused(this); // TV MODE: "show controls when paused", however it was paused
 }
 
 void CMainFrame::OnPlayPlaypause()
@@ -21394,6 +21424,8 @@ void CMainFrame::CloseMedia(bool bNextIsQueued/* = false*/, bool bPendingFileDel
 
 void CMainFrame::CloseMediaInternal(bool bNextIsQueued/* = false*/, bool bPendingFileDelete/* = false*/)
 {
+    CTvMenu::Instance().OnCloseMedia(); // TV MODE: drop madVR OSD elements before the graph goes away
+
     auto& s = AfxGetAppSettings();
 
     bool hibernating = (m_dwLastPause == 1ULL);

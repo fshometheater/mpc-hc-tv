@@ -1156,7 +1156,7 @@ namespace
     // Choice: text value; List: int value with names; Int: number; Bool: on/off; Heading: section title
     enum class MvKind { Choice, List, Int, Bool, Heading };
     // madVR submenus (MadVrSettingDef::sub)
-    enum MvSub { MvRoot = 0, MvHdr, MvCalibration, MvProperties, MvSmoothMotion, MvUpRefine, MvModes, MvSubCount };
+    enum MvSub { MvRoot = 0, MvHdr, MvCalibration, MvProperties, MvSmoothMotion, MvUpRefine, MvModes, MvTradeQuality, MvSubCount };
     struct MadVrSettingDef {
         MvKind kind = MvKind::Heading;
         int sub = MvRoot;
@@ -1516,7 +1516,58 @@ namespace
         add(MvInt(MvUpRefine, U(L"superResABStrength"), L"SuperRes anti-bloating strength", 25, 150, 25, L" %", false).Paired());
         add(MvBool(MvUpRefine, U(L"superResAR"), L"SuperRes anti-ringing", false).If(U(L"superRes"), L"true"));
         add(MvBool(MvUpRefine, U(L"refineOnce"), L"Refine only once after upscaling", false));
+
+        // --- trade quality for performance (rendering\tradeQuality, global): madVR's own page and order;
+        // its hidden copyback / 3dlut options are left out like on madVR's page
+        const auto T = [](LPCWSTR id) { return CStringW(L"rendering\\tradeQuality\\") + id; };
+        static std::vector<CStringW> tq; // ids must outlive the defs (LPCWSTR)
+        const std::pair<LPCWSTR, LPCWSTR> tradeOptions[] = {
+            { L"fastSubtitles", L"Optimize subtitles for performance instead of quality" },
+            { L"dxvaChromaWhenDecode", L"Use DXVA chroma upscaling when doing native DXVA decoding" },
+            { L"dxvaChromaWhenDeint", L"Use DXVA chroma upscaling when doing DXVA deinterlacing" },
+            { L"gammaDithering", L"Don't use linear light for dithering" },
+            { L"noGradientAngles", L"Don't analyze gradient angles for debanding" },
+            { L"dontRerenderFades", L"Don't rerender frames when fade in / out is detected" },
+            { L"downscalePath", L"Scale chroma separately, if it saves performance" },
+            { L"dumbToneMapping", L"Compromise on HDR tone & gamut mapping accuracy" },
+            { L"fastRepair", L"Compromise on HDR luminance channel quality" },
+            { L"staticHdr", L"Don't measure HDR frame peak luminance" },
+            { L"mayLoseBtb", L"Lose BTB and WTW if it improves performance" },
+            { L"gammaBlending", L"Don't use linear light for smooth motion frame blending" },
+            { L"10bitChroma", L"Use 10-bit chroma buffer instead of 16-bit" },
+            { L"10bitLuma", L"Use 10-bit image buffer instead of 16-bit" },
+            { L"customShadersTv", L"Run custom pixel shaders in video levels instead of PC levels" },
+            { nullptr, L"Should not be used" },
+            { L"halfDxvaDeintFramerate", L"Use half frame rate for DXVA deinterlacing" },
+            { L"dxvaTrustMatrix", L"Trust DXVA color & levels conversion" },
+        };
+        tq.reserve(_countof(tradeOptions));
+        for (const auto& o : tradeOptions) {
+            if (!o.first) {
+                add(MvHead(MvTradeQuality, o.second));
+                continue;
+            }
+            tq.push_back(T(o.first));
+            add(MvBool(MvTradeQuality, tq.back().GetString(), o.second, false));
+        }
         return defs;
+    }
+
+    // How many of madVR's "trade quality for performance" options are on (-1: unknown)
+    int MadVrTradeQualityCount(IUnknown* madVr)
+    {
+        CComQIPtr<IMadVRSettings> s(madVr);
+        if (!s) {
+            return -1;
+        }
+        int on = 0;
+        for (const auto& d : MadVrDefs()) {
+            BOOL b = FALSE;
+            if (d.sub == MvTradeQuality && d.kind == MvKind::Bool && s->SettingsGetBoolean(d.id, &b) && b) {
+                on++;
+            }
+        }
+        return on;
     }
 
     LPCWSTR MadVrSubTitle(int sub)
@@ -1528,6 +1579,7 @@ namespace
             case MvSmoothMotion: return L"madVR  Smooth motion";
             case MvUpRefine: return L"madVR  Upscaling refinement";
             case MvModes: return L"madVR  Display modes";
+            case MvTradeQuality: return L"madVR  Trade quality for performance";
             default: return L"madVR settings";
         }
     }
@@ -1593,9 +1645,77 @@ namespace
     }
 }
 
+// Debug aid: with MPCHC_TV_MADVR_DUMP=<file>, the madVR panel writes madVR's whole settings tree
+// (folders and values: path, id, name, type, current value) to that file once. Read only.
+namespace
+{
+    void DumpMadVrFolder(IMadVRSettings2* s, const CStringW& path, FILE* f, int depth)
+    {
+        if (depth > 8) {
+            return;
+        }
+        for (int i = 0;; i++) {
+            wchar_t id[256], name[512], type[64];
+            int a = _countof(id), b = _countof(name), c = _countof(type);
+            if (!s->SettingsEnumValues(path, i, id, name, type, &a, &b, &c)) {
+                break;
+            }
+            const CStringW full = path.IsEmpty() ? CStringW(id) : path + L"\\" + id;
+            CStringW value;
+            BOOL bv = FALSE;
+            int iv = 0;
+            wchar_t sv[1024] = {};
+            int svLen = _countof(sv);
+            if (_wcsicmp(type, L"boolean") == 0 && s->SettingsGetBoolean(full, &bv)) {
+                value = bv ? L"true" : L"false";
+            } else if (_wcsicmp(type, L"integer") == 0 && s->SettingsGetInteger(full, &iv)) {
+                value.Format(L"%d", iv);
+            } else if (s->SettingsGetString(full, sv, &svLen)) {
+                value = sv;
+            }
+            fwprintf(f, L"V | %s | %s | %s | %s\n", full.GetString(), name, type, value.GetString());
+        }
+        for (int i = 0;; i++) {
+            wchar_t id[256], name[512], type[64];
+            int a = _countof(id), b = _countof(name), c = _countof(type);
+            if (!s->SettingsEnumFolders(path, i, id, name, type, &a, &b, &c)) {
+                break;
+            }
+            const CStringW full = path.IsEmpty() ? CStringW(id) : path + L"\\" + id;
+            fwprintf(f, L"F | %s | %s | %s\n", full.GetString(), name, type);
+            DumpMadVrFolder(s, full, f, depth + 1);
+        }
+    }
+}
+
+static void MaybeDumpMadVrSettings(IUnknown* madVr)
+{
+    static bool done = false;
+    wchar_t file[MAX_PATH] = {};
+    if (done || !madVr || GetEnvironmentVariableW(L"MPCHC_TV_MADVR_DUMP", file, MAX_PATH) == 0) {
+        return;
+    }
+    CComQIPtr<IMadVRSettings2> s(madVr);
+    FILE* f = nullptr;
+    if (s && _wfopen_s(&f, file, L"w, ccs=UTF-8") == 0 && f) {
+        // the root's name isn't documented: try the usual ways, then the known top folders
+        for (LPCWSTR root : { L"", L"\\" }) {
+            fwprintf(f, L"# root \"%s\"\n", root);
+            DumpMadVrFolder(s, root, f, 0);
+        }
+        for (LPCWSTR top : { L"rendering", L"processing", L"scalingParent", L"scaling", L"devices", L"settings", L"general" }) {
+            fwprintf(f, L"# folder %s\n", top);
+            DumpMadVrFolder(s, top, f, 0);
+        }
+        fclose(f);
+        done = true;
+    }
+}
+
 // madVR's folder for the display device in use ("devices\<id>"), empty if not found.
 CStringW CTvMenu::MadVrActiveDevice(CStringW* deviceName)
 {
+    MaybeDumpMadVrSettings(m_pMadVr);
     CComQIPtr<IMadVRSettings2> s(m_pMadVr); // same madVR filter object
     if (!s || !m_pMainFrame || !m_pMainFrame->m_pVideoWnd) {
         return L"";
@@ -2674,6 +2794,14 @@ bool CTvMenu::MadVrClick(int row, POINT pt)
     }
     if (m_page != Page::MadVR || row < 0 || row >= static_cast<int>(m_rows.size()) || m_rows[row].kind != RowKind::MadVrSetting) {
         return false;
+    }
+    if (m_rows[row].toggle >= 0) {
+        // a plain on / off (a switch): a click anywhere on the row flips it, as OK does
+        if (!m_rows[row].faded) {
+            m_nFocus = row;
+            Activate();
+        }
+        return true;
     }
     if (row != m_nFocus || m_nMadVrPart < 0) {
         m_nFocus = row;
@@ -5092,6 +5220,7 @@ void CTvMenu::BuildRowsContent()
                             r.value = MadVrValueText(i + 1); // shown faded while off
                         } else if (defs[i].kind == MvKind::Bool) {
                             r.prefix = MadVrValueText(i);
+                            r.toggle = r.prefix == L"On" ? 1 : 0; // a plain on / off: drawn as a switch, OK flips it
                         } else {
                             r.value = MadVrValueText(i);
                         }
@@ -5173,6 +5302,13 @@ void CTvMenu::BuildRowsContent()
                 }
                 addSub(MvUpRefine, L"Upscaling refinement");
                 addSub(MvSmoothMotion, L"Smooth motion");
+                addSub(MvTradeQuality, L"Trade quality for performance");
+                const int tradeOn = MadVrTradeQualityCount(m_pMadVr);
+                m_rows.back().value = tradeOn < 0 ? CStringW() : tradeOn == 0 ? CStringW(L"None") : [tradeOn] {
+                    CStringW v;
+                    v.Format(L"%d on", tradeOn);
+                    return v;
+                }();
             }
             heading(L"Display");
             // The display in use; with more than one display connected, Left / Right pick which
@@ -5804,7 +5940,12 @@ void CTvMenu::Activate()
             LavWindow(row.data == 1);
             break;
         case RowKind::MadVrSetting:
-            StartMadVrEdit(); // OK starts editing; nothing changes until Up / Down
+            if (row.toggle >= 0) {
+                StepMadVrSetting(row.data, +1); // a plain on / off: OK flips it (the switch slides)
+                RebuildKeepingMadVrFocus(row.data);
+            } else {
+                StartMadVrEdit(); // OK starts editing; nothing changes until Up / Down
+            }
             break;
         case RowKind::MadVrStats:
             ToggleMadVrStats(); // the menu stays open
@@ -7348,7 +7489,7 @@ void CTvMenu::RenderPanel()
             continue;
         }
 
-        if (m_page == Page::MadVR && row.kind == RowKind::MadVrSetting) {
+        if (m_page == Page::MadVR && row.kind == RowKind::MadVrSetting && row.toggle < 0) { // plain on / off: the switch below
             // Label on the left; on the right the row's parts: on / off, value, and while editing
             // the mini-view icon. The picked part (editing) sits on a see-through rounded chip with
             // small down / up triangles either side. Rows (or values) that only apply while some
@@ -7458,8 +7599,9 @@ void CTvMenu::RenderPanel()
             // On / off as a switch at the right: a pill with a knob (right + filled = on). OK, Left or
             // Right flips it; the mouse anywhere on the row too.
             const float h = fontH * 0.95f, w = h * 1.8f;
-            // its right end lines up with the other values' text (they keep room for the right arrow)
-            const int arrowRoom = TextWidth(hdc, fontRow, kTriRight) + TextWidth(hdc, fontRow, L"  ");
+            // its right end lines up with the other values' text: TV options keep room for their right
+            // arrow; madVR rows have no arrows, their values end at the row's padding
+            const int arrowRoom = (m_page == Page::MadVR) ? 0 : TextWidth(hdc, fontRow, kTriRight) + TextWidth(hdc, fontRow, L"  ");
             const float cy = (r.top + r.bottom) / 2.0f, xr = static_cast<float>(r.right - pad - arrowRoom), xl = xr - w;
             const bool on = row.toggle == 1;
             const COLORREF rowBg = focused ? kFocusColor : kPanelColor;
@@ -7630,7 +7772,7 @@ void CTvMenu::RenderPanel()
     } else if (m_page == Page::MadVR && m_nFocus < count) {
         hint.Format(L"%s move   %sOK %s   Back return", kArrowUpDown,
                     m_bTwoColumns ? (CStringW(kTriLeft) + kTriRight + L" column   ").GetString() : L"",
-                    madVrRow ? L"edit" : L"select");
+                    madVrRow ? (m_rows[m_nFocus].toggle >= 0 ? L"on / off" : L"edit") : L"select");
     } else if (m_page == Page::Main) {
         hint.Format(L"%s move   %s%s change   OK open   Back return", kArrowUpDown, kTriLeft, kTriRight);
     } else if (m_nListenKey >= 0) {

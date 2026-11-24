@@ -183,7 +183,7 @@ MPC-HC it is licensed under the **GPL-3.0** (see [COPYING.txt](../COPYING.txt)).
 Not affiliated with MPC-HC, madVR, LAV Filters, Emby or Jellyfin. The track lists follow the look and
 behaviour of Emby's and Jellyfin's players; no code, icons or fonts were taken from them.
 
-The film behind the screenshots of the control bar and the info panel is [*Singularity*](https://studio.blender.org/films/singularity/)
+The film behind the screenshots of the control bar, the info panel and the madVR mini view is [*Singularity*](https://studio.blender.org/films/singularity/)
 by Blender Studio (director Andy Goralczyk), (CC) Blender Foundation | studio.blender.org, licensed
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The screenshots show frames of it with this
 player's overlay on top; they aren't endorsed by Blender. The Blender and Singularity logos are not

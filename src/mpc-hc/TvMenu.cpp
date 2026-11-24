@@ -3187,27 +3187,76 @@ void CTvMenu::PrepareContextMenu(CMainFrame* pMainFrame, CMenu* pMenu)
 
 CStringW CTvMenu::KeyText(int actionId)
 {
-    if (actionId == kBarKey) {
-        return VirtualKeyName(BarKey());
-    }
-    if (actionId == kExtraBackKey || actionId == kExtraOkKey) {
-        return VirtualKeyName(ExtraKey(actionId == kExtraBackKey));
-    }
-    // its MPC-HC key, the arrows set for it, and the keys held for it ("Space, Right, hold Red")
-    CStringW keys = CStringW(CPPageAccelTbl::MakeAccelShortcutLabel(static_cast<UINT>(actionId)));
-    auto add = [&keys](const CStringW& k) { keys += keys.IsEmpty() ? k : (CStringW(L", ") + k); };
-    static const LPCWSTR kArrowNames[4] = { L"Left", L"Right", L"Up", L"Down" };
-    for (int a = 0; a < 4; a++) {
-        if (ArrowAction(a * 2) == actionId) {
-            add(kArrowNames[a]);
-        }
-    }
-    for (const auto& kv : HoldMap()) {
-        if (kv.second == actionId) {
-            add(L"hold " + VirtualKeyName(kv.first));
-        }
+    // its MPC-HC key (or TV-only key), the arrows set for it, and the keys held for it ("Space, Right, hold Red")
+    CStringW keys;
+    for (const KeyBinding& b : KeyBindings(actionId)) {
+        keys += keys.IsEmpty() ? b.label : (CStringW(L", ") + b.label);
     }
     return keys.IsEmpty() ? CStringW(L"Not set") : keys;
+}
+
+// What a hold of this action runs: an MPC-HC command itself; "Show the control bar" the TV menu
+// command (it toggles the bar); the extra Back / OK keys can't have one
+int CTvMenu::HoldCommand(int action)
+{
+    return action > 0 ? action : action == kBarKey ? ID_TV_MENU : 0;
+}
+
+std::vector<CTvMenu::KeyBinding> CTvMenu::KeyBindings(int action)
+{
+    std::vector<KeyBinding> v;
+    if (action == kBarKey || action == kExtraBackKey || action == kExtraOkKey) {
+        const UINT k = action == kBarKey ? BarKey() : ExtraKey(action == kExtraBackKey);
+        if (k) {
+            v.push_back({ 0, k, -1, VirtualKeyName(k) });
+        }
+    } else if (action > 0) {
+        const CStringW mk = CStringW(CPPageAccelTbl::MakeAccelShortcutLabel(static_cast<UINT>(action)));
+        if (!mk.IsEmpty()) {
+            v.push_back({ 0, 0, -1, mk });
+        }
+        static const LPCWSTR kArrowNames[4] = { L"Left", L"Right", L"Up", L"Down" };
+        for (int a = 0; a < 4; a++) {
+            if (ArrowAction(a * 2) == action) {
+                v.push_back({ 1, 0, a * 2, kArrowNames[a] });
+            }
+        }
+    }
+    if (const int hold = HoldCommand(action)) {
+        for (const auto& kv : HoldMap()) {
+            if (kv.second == hold) {
+                v.push_back({ 2, kv.first, -1, L"Hold " + VirtualKeyName(kv.first) });
+            }
+        }
+    }
+    return v;
+}
+
+// Takes one key off an action (Button / key mapping > Edit)
+void CTvMenu::RemoveBinding(int action, const KeyBinding& b)
+{
+    if (b.type == 0) {
+        AssignKey(action, 0, 0); // its MPC-HC key, or the TV-only key
+    } else if (b.type == 1) {
+        SetArrowAction(b.slot, kArrowDefault); // the arrow goes back to its normal job
+    } else {
+        auto m = HoldMap();
+        m.erase(b.vk);
+        SaveHoldMap(m);
+    }
+}
+
+std::vector<int> CTvMenu::KeyChoices(int action)
+{
+    std::vector<int> c = { kChoiceSet };
+    if (HoldCommand(action)) {
+        c.push_back(kChoiceHold);
+    }
+    if (KeyBindings(action).size() > 1) {
+        c.push_back(kChoiceEdit); // several keys: take off just one
+    }
+    c.push_back(kChoiceClear);
+    return c;
 }
 
 // Sets (vk != 0) or clears the key of an action. MPC-HC commands go into MPC-HC's own key
@@ -3294,14 +3343,16 @@ bool CTvMenu::HandleKeyCapture(const MSG* pMsg)
         ClearAction(action); // a keyboard's shortcut for "Clear"
         m_nListenKey = -1;
         m_bListenHold = false;
-    } else if (plain && vk == VK_RETURN) {
+    } else if (plain && vk == VK_RETURN && !m_bListenHold) {
         m_strKeyMessage = L"OK is used by the menus";
         BuildRows();
         Render();
         return true;
     } else if (m_bListenHold) {
-        // A hold: any single key, arrows too (acts only while the bar and menus are hidden)
-        if (!plain) {
+        // A hold: any single key, arrows and OK too (acts only while the bar and menus are hidden; a
+        // short press keeps the key's normal job, e.g. OK play / pause)
+        const int hold = HoldCommand(action);
+        if (!plain || !hold) {
             m_strKeyMessage = L"Use a single key (no Ctrl / Shift / Alt)";
             BuildRows();
             Render();
@@ -3311,9 +3362,9 @@ bool CTvMenu::HandleKeyCapture(const MSG* pMsg)
         // loses it (one hold per key, one per action). Short presses (keys, arrows) stay as they are.
         auto m = HoldMap();
         for (auto it = m.begin(); it != m.end();) {
-            it = (it->second == action) ? m.erase(it) : std::next(it);
+            it = (it->second == hold) ? m.erase(it) : std::next(it);
         }
-        m[vk] = action;
+        m[vk] = hold;
         SaveHoldMap(m);
         m_nListenKey = -1;
         m_bListenHold = false;
@@ -3724,7 +3775,55 @@ bool CTvMenu::HandleKeyEditKey(UINT vk, bool isRepeat)
     }
     const int ki = m_rows[row].data;
     const int action = kKeyActions[std::clamp(ki, 0, static_cast<int>(_countof(kKeyActions)) - 1)].id;
-    const int parts = action < 0 ? 2 : 3;
+
+    if (m_nKeyTag >= 0) {
+        // Edit: the action's keys as tags; Left / Right pick one, OK takes it off, Back back to the choices
+        const auto keys = KeyBindings(action);
+        const int n = static_cast<int>(keys.size());
+        switch (vk) {
+            case VK_LEFT:
+            case VK_RIGHT:
+                if (n > 0) {
+                    m_nKeyTag = (m_nKeyTag + (vk == VK_RIGHT ? 1 : -1) + n) % n;
+                    Render();
+                }
+                return true;
+            case VK_RETURN:
+                if (!isRepeat && m_nKeyTag < n) {
+                    RemoveBinding(action, keys[m_nKeyTag]);
+                    const int left = static_cast<int>(KeyBindings(action).size());
+                    if (left == 0) {
+                        m_nKeyTag = -1;
+                        m_nKeyEditRow = -1; // nothing left to edit
+                    } else {
+                        m_nKeyTag = std::min(m_nKeyTag, left - 1);
+                    }
+                    BuildRows();
+                    Render();
+                }
+                return true;
+            case VK_ESCAPE:
+            case VK_BACK:
+            case VK_BROWSER_BACK:
+                if (!isRepeat) {
+                    m_nKeyTag = -1;
+                    m_nKeyEditPart = std::clamp(m_nKeyEditPart, 0, static_cast<int>(KeyChoices(action).size()) - 1);
+                    Render();
+                }
+                return true;
+            case VK_UP:
+            case VK_DOWN:
+                m_nKeyTag = -1;
+                m_nKeyEditRow = -1;
+                return false; // and move on as usual
+            default:
+                return true;
+        }
+    }
+
+    const auto choices = KeyChoices(action);
+    const int parts = static_cast<int>(choices.size());
+    m_nKeyEditPart = std::clamp(m_nKeyEditPart, 0, parts - 1);
     switch (vk) {
         case VK_LEFT:
         case VK_RIGHT:
@@ -3733,13 +3832,18 @@ bool CTvMenu::HandleKeyEditKey(UINT vk, bool isRepeat)
             return true;
         case VK_RETURN:
             if (!isRepeat) {
-                const int choice = (action < 0 && m_nKeyEditPart == 1) ? 2 : m_nKeyEditPart;
+                const int choice = choices[m_nKeyEditPart];
+                if (choice == kChoiceEdit) {
+                    m_nKeyTag = 0; // the keys as tags, the row stays open
+                    Render();
+                    return true;
+                }
                 m_nKeyEditRow = -1;
-                if (choice == 2) {
+                if (choice == kChoiceClear) {
                     ClearAction(action);
                 } else {
                     m_nListenKey = ki; // the next key pressed is taken (HandleKeyCapture)
-                    m_bListenHold = (choice == 1);
+                    m_bListenHold = (choice == kChoiceHold);
                 }
                 m_strKeyMessage.Empty();
                 BuildRows();
@@ -3806,9 +3910,11 @@ void CTvMenu::ClearAction(int action)
                 SetArrowAction(a * 2, kArrowDefault); // the arrow goes back to its normal job
             }
         }
+    }
+    if (const int hold = HoldCommand(action)) {
         auto m = HoldMap();
         for (auto it = m.begin(); it != m.end();) {
-            it = (it->second == action) ? m.erase(it) : std::next(it);
+            it = (it->second == hold) ? m.erase(it) : std::next(it);
         }
         SaveHoldMap(m);
     }
@@ -4346,12 +4452,16 @@ bool CTvMenu::HandleMouse(CMainFrame* pMainFrame, const MSG* pMsg)
         }
     }
 
-    // No file loaded: a click on the empty player (the logo) opens a file, as File > Quick Open
+    // No file loaded: a click on the empty player (the logo) opens the last file from MPC-HC's recent
+    // files (as File > Recent files > the first one); with no history, a file to open (File > Quick Open)
     if (!m_bOpen && msg == WM_LBUTTONDOWN && pMainFrame->GetLoadState() == MLS::CLOSED) {
         HWND hView = pMainFrame->m_wndView.m_hWnd;
         if (hView && (pMsg->hwnd == hView || ::IsChild(hView, pMsg->hwnd))) {
             m_bSwallowLUp = true;
-            pMainFrame->PostMessage(WM_COMMAND, ID_FILE_OPENQUICK);
+            auto& s = AfxGetAppSettings();
+            s.MRU.ReadMediaHistory();
+            const bool haveRecent = s.fKeepHistory && s.MRU.GetSize() > 0 && !s.MRU[0].fns.IsEmpty() && !s.MRU[0].fns.GetHead().IsEmpty();
+            pMainFrame->PostMessage(WM_COMMAND, haveRecent ? ID_RECENT_FILE_START : ID_FILE_OPENQUICK);
             return true;
         }
     }
@@ -4757,6 +4867,7 @@ void CTvMenu::RemoveNow()
     m_nListenKey = -1;
     m_bListenHold = false;
     m_nKeyEditRow = -1;
+    m_nKeyTag = -1;
     m_bScrollGlide = false;
     m_nDragPicker = -1;
     m_bMouseRightEdge = false;
@@ -4800,6 +4911,7 @@ void CTvMenu::ShowPage(Page page, int focusRow)
     m_nListenKey = -1;
     m_bListenHold = false;
     m_nKeyEditRow = -1;
+    m_nKeyTag = -1;
     m_bScrollGlide = false;
     if (page == Page::Bar || page == Page::MiniSeek) {
         m_rows.clear();
@@ -5615,9 +5727,9 @@ void CTvMenu::BuildRowsContent()
                         } else {
                             r.value = KeyText(kKeyActions[ki].id);
                         }
-                        r.help = kKeyActions[ki].id < 0
-                                 ? L"OK: set a key or clear it"
-                                 : L"OK: set a key, set a hold (0.6 s) or clear. Arrows and holds work only while the bar and menus are hidden";
+                        r.help = HoldCommand(kKeyActions[ki].id) == 0
+                                 ? L"OK: set a key, edit the keys or clear"
+                                 : L"OK: set a key, set a hold (0.6 s), edit the keys or clear. Arrows and holds work only while the bar and menus are hidden";
                         m_rows.push_back(r);
                     }
                 }
@@ -5960,10 +6072,11 @@ void CTvMenu::Activate()
             MadVrAction(row.data);
             break;
         case RowKind::KeyRow:
-            // OK shows the row's choices: Set / Set as hold / Clear (Left / Right pick, OK does it;
+            // OK shows the row's choices: Set / Set hold / Edit / Clear (Left / Right pick, OK does it;
             // see HandleKeyEditKey). No Delete key needed on a remote.
             m_nKeyEditRow = m_nFocus;
             m_nKeyEditPart = 0;
+            m_nKeyTag = -1;
             m_strKeyMessage.Empty();
             m_rowFade.valid = false;
             BuildRows();
@@ -7571,25 +7684,51 @@ void CTvMenu::RenderPanel()
             textLeft += iconW;
         }
         if (row.kind == RowKind::KeyRow && i == m_nKeyEditRow) {
-            // Button / key mapping: the row's choices as pills at the right, the picked one solid
+            // Button / key mapping: the row's choices as pills at the right, the picked one solid, with
+            // the keys it has now (dimmed) in between. Edit: the keys themselves as tags instead.
             const int action = kKeyActions[std::clamp(row.data, 0, static_cast<int>(_countof(kKeyActions)) - 1)].id;
-            const std::vector<LPCWSTR> names = action < 0 ? std::vector<LPCWSTR> { L"Set", L"Clear" }
-                                                          : std::vector<LPCWSTR> { L"Set", L"Set hold", L"Clear" };
+            const bool tags = m_nKeyTag >= 0;
+            std::vector<CStringW> names;
+            if (tags) {
+                for (const auto& b : KeyBindings(action)) {
+                    names.push_back(b.label);
+                }
+            } else {
+                for (const int c : KeyChoices(action)) {
+                    names.push_back(c == kChoiceSet ? L"Set" : c == kChoiceHold ? L"Set hold" : c == kChoiceEdit ? L"Edit" : L"Clear");
+                }
+            }
+            const int pickedIdx = tags ? m_nKeyTag : m_nKeyEditPart;
             const int pillH = fontH * 13 / 10, gapX = pad / 2, padX = pad;
             const float cy = (r.top + r.bottom) / 2.0f;
             int x = r.right - pad;
             int pillLeft = x;
             for (int k = static_cast<int>(names.size()) - 1; k >= 0; k--) {
+                if (tags && k == pickedIdx) {
+                    names[k] += L"  \x00D7"; // OK takes this one off
+                }
                 const int w = TextWidth(hdc, fontRow, names[k]) + padX * 2;
                 const RECT rp = { x - w, static_cast<LONG>(cy - pillH / 2.0f), x, static_cast<LONG>(cy + pillH / 2.0f) };
-                const bool picked = (k == m_nKeyEditPart);
-                const COLORREF fill = picked ? kTextColor : Mix(kFocusColor, kTextColor, 0.2f);
-                canvas.FillRoundPolyAA({ { static_cast<float>(rp.left), static_cast<float>(rp.top) }, { static_cast<float>(rp.right), static_cast<float>(rp.top) },
-                                         { static_cast<float>(rp.right), static_cast<float>(rp.bottom) }, { static_cast<float>(rp.left), static_cast<float>(rp.bottom) } },
-                                       pillH / 2.0f, fill);
-                DrawLine(hdc, fontRow, picked ? kFocusColor : kTextColor, names[k], rp, DT_CENTER);
+                const bool picked = (k == pickedIdx);
+                // the picked one as a chip like the madVR values (panel colour over the highlight);
+                // Edit: the keys in white, the picked one on a red chip (OK takes it off)
+                const COLORREF rowBg = focused ? kFocusColor : kPanelColor;
+                const COLORREF kRemoveColor = RGB(196, 48, 52);
+                if (picked) {
+                    const COLORREF fill = tags ? Mix(rowBg, kRemoveColor, 0.85f) : Mix(rowBg, kPanelColor, 0.3f);
+                    canvas.FillRoundPolyAA({ { static_cast<float>(rp.left), static_cast<float>(rp.top) }, { static_cast<float>(rp.right), static_cast<float>(rp.top) },
+                                             { static_cast<float>(rp.right), static_cast<float>(rp.bottom) }, { static_cast<float>(rp.left), static_cast<float>(rp.bottom) } },
+                                           pillH * 0.35f, fill);
+                }
+                const COLORREF ink = (picked || tags) ? kTextColor : (focused ? kFocusDimTextColor : kDimTextColor);
+                DrawLine(hdc, fontRow, ink, names[k], rp, DT_CENTER);
                 pillLeft = rp.left;
                 x = rp.left - gapX;
+            }
+            const int labelW = TextWidth(hdc, fontRow, row.text);
+            if (!tags) {
+                RECT rKeys = { std::min<LONG>(textLeft + labelW + pad * 2, pillLeft - pad), r.top, pillLeft - pad, r.bottom };
+                DrawLine(hdc, fontRow, Mix(textColor, focused ? kFocusColor : kPanelColor, 0.45f), KeyText(action), rKeys, DT_RIGHT);
             }
             RECT rLabel = { textLeft, r.top, pillLeft - pad, r.bottom };
             DrawLine(hdc, fontRow, textColor, row.text, rLabel, DT_LEFT);
@@ -7777,6 +7916,8 @@ void CTvMenu::RenderPanel()
         hint.Format(L"%s move   %s%s change   OK open   Back return", kArrowUpDown, kTriLeft, kTriRight);
     } else if (m_nListenKey >= 0) {
         hint = L"Press the key to use   Back cancel";
+    } else if (m_nKeyEditRow >= 0 && m_nKeyTag >= 0) {
+        hint.Format(L"%s%s pick   OK remove   Back done", kTriLeft, kTriRight);
     } else if (m_nKeyEditRow >= 0) {
         hint.Format(L"%s%s choose   OK do it   Back cancel", kTriLeft, kTriRight);
     } else if (m_nFocus < count && m_rows[m_nFocus].kind == RowKind::KeyRow) {

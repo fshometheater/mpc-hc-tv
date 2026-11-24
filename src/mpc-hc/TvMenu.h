@@ -271,8 +271,22 @@ private:
     static void SaveHoldMap(const std::map<UINT, int>& m);
     static int HoldFor(UINT vk);            // the hold command of a key, 0 = none
     static void ClearAction(int action);    // every key off an action (MPC-HC key, arrows, holds)
-    int m_nKeyEditRow = -1;                 // Button / key mapping: row showing its Set / Hold / Clear choices
-    int m_nKeyEditPart = 0;                 // the chosen one: 0 set, 1 set as hold, 2 clear (TV-only keys: 0 set, 1 clear)
+    // Every key of an action, for its row's text and the Edit tags: its MPC-HC key (or TV-only key),
+    // the arrows set for it, the keys held for it
+    struct KeyBinding {
+        int type = 0;   // 0 the key (MPC-HC's or the TV-only one), 1 an arrow, 2 a hold
+        UINT vk = 0;    // hold: the key held
+        int slot = -1;  // arrow: its ArrowAction slot
+        CStringW label; // "Space", "Right", "hold Red"
+    };
+    static std::vector<KeyBinding> KeyBindings(int action);
+    static void RemoveBinding(int action, const KeyBinding& b);
+    static int HoldCommand(int action);     // what a hold of this action runs (0 = it can't have one)
+    enum KeyChoice { kChoiceSet = 0, kChoiceHold, kChoiceEdit, kChoiceClear };
+    static std::vector<int> KeyChoices(int action); // the row's choices: Set, Set hold, Edit (2+ keys), Clear
+    int m_nKeyEditRow = -1;                 // Button / key mapping: row showing its choices
+    int m_nKeyEditPart = 0;                 // the chosen one (index into KeyChoices)
+    int m_nKeyTag = -1;                     // Edit: the picked key tag (-1 = not editing the keys)
     bool m_bListenHold = false;             // the key being waited for becomes a hold
     bool HandleKeyEditKey(UINT vk, bool isRepeat);
     static int ArrowAction(int slot);

@@ -76,8 +76,9 @@ and web interface are unchanged.
   renderer, "Restart playback to apply" reopens the file at the same place with the same tracks.
 - **madVR panel**: picture (HDR, scaling refinement, smooth motion, trade quality for performance),
   display (calibration, display modes, frame rate matching) and tools, edited live with a mini view so
-  the picture stays visible. On / off options are switches (OK or a click flips them); options with an
-  on / off and a value keep both on one row.
+  the picture stays visible. **Every change applies at once**: there's no Apply button like in madVR's own
+  settings window, the picture updates while you change a value. On / off options are switches (OK or a
+  click flips them); options with an on / off and a value keep both on one row.
 - **LAV pages**: bitstreaming, DRC, output formats, hardware decoding, RGB levels, deinterlacing.
 
 <p align="center">
@@ -85,6 +86,11 @@ and web interface are unchanged.
 </p>
 <p align="center">
   <img src="../docs/screenshots/madvr-hdr.png" alt="madVR HDR settings" width="100%">
+</p>
+<p align="center">
+  <img src="../docs/screenshots/madvr-mini-view.png" alt="madVR mini view over the film" width="100%">
+  <br>
+  <sub>Mini view: one setting at a time over the picture. Up / Down change it and the picture follows at once.</sub>
 </p>
 <p align="center">
   <img src="../docs/screenshots/video-page.png" alt="Video page" width="60%">
@@ -177,7 +183,7 @@ MPC-HC it is licensed under the **GPL-3.0** (see [COPYING.txt](../COPYING.txt)).
 Not affiliated with MPC-HC, madVR, LAV Filters, Emby or Jellyfin. The track lists follow the look and
 behaviour of Emby's and Jellyfin's players; no code, icons or fonts were taken from them.
 
-The film behind the screenshots of the control bar and the info panel is [*Singularity*](https://studio.blender.org/films/singularity/)
+The film behind the screenshots of the control bar, the info panel and the madVR mini view is [*Singularity*](https://studio.blender.org/films/singularity/)
 by Blender Studio (director Andy Goralczyk), (CC) Blender Foundation | studio.blender.org, licensed
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The screenshots show frames of it with this
 player's overlay on top; they aren't endorsed by Blender. The Blender and Singularity logos are not

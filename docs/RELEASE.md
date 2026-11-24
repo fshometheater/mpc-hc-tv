@@ -134,7 +134,8 @@ display stays at a high refresh rate (e.g. 120 Hz) during playback.
 - Device settings (HDR, calibration, properties, display modes) are written to the madVR **device the
   video is on**, found by matching the monitor's EDID. If two devices match, nothing is changed and the
   panel says why.
-- Changes are written to madVR's settings immediately, the same settings madVR's own window edits.
+- Changes are written to madVR's settings immediately, the same settings madVR's own window edits, and
+  take effect on the playing picture at once: there is no Apply step as in madVR's own window.
   Don't edit the same setting in madVR's window at the same time.
 - **Display mode list** ("Display modes" submenu): madVR offers no API to write this value, so the
   player exports madVR's settings record, replaces only that value, imports it and compares a fresh

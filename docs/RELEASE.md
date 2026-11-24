@@ -33,12 +33,15 @@ What TV mode adds, in short:
   auto-close, animations, where the overlay is drawn), Control bar (when it shows, what's on it, its
   buttons: show / hide, order, separators you can add / move / remove), Seeking, Audio and subtitles (including a cut-down subtitle style
   page), Remote keys (assign keys by pressing them; grouped: TV menu, playback, jumps, audio, subtitles,
-  picture, player).
+  picture, player). Each row offers Set, Set hold (0.6 s; OK can be held too), Edit (the keys as tags,
+  OK removes the picked one; only with two or more keys) and Clear, with the current keys beside them.
 - **Holding Back** closes every menu at once, from any depth.
 - **madVR panel** (only when madVR is the renderer), in three groups: *Display* (properties,
   calibration, frame matching, display mode list: add 2160p / 1440p / 1080p / current modes, remove
   modes as tags), *Picture* (HDR in two columns like madVR's own page, upscaling refinement, smooth
-  motion) and *Tools* (statistics Ctrl+J, madVR's own settings window).
+  motion, trade quality for performance) and *Tools* (statistics Ctrl+J, madVR's own settings window).
+  On / off options are switches; options with an on / off and a value show both on one row (OK flips,
+  Up / Down change the value, Back is done).
 - **LAV Audio / LAV Video pages**: bitstreaming, DRC, audio delay, output formats; hardware decoder,
   RGB output levels, hardware resolutions / codecs, deinterlacing, dithering; plus buttons that open
   LAV's own property windows.
@@ -176,6 +179,8 @@ display stays at a high refresh rate (e.g. 120 Hz) during playback.
 
 ### Info panels
 - File details come from MediaInfo (read in the background; "Reading media info..." meanwhile).
+- Web addresses (a media server passing a stream URL): MediaInfo reads the stream with HTTP range
+  requests (1 MB pieces, at most 64 MB); the title comes from the stream's metadata when it has one.
 - The cable signal line (YCbCr / RGB, bit depth, range) needs an **NVIDIA** GPU (NVAPI); other GPUs
   just don't show it.
 - Bitstreaming is detected from LAV Audio's own report; HDR / Dolby Vision / Atmos badges come from
@@ -275,7 +280,8 @@ already exist it reads "(overrides some of your current settings to work best wi
 View > Presets also has **TV** (key 5: TV Mode with caption and menu) and **TV Minimal** (key 6: TV
 Mode, borderless like Minimal). Plain 5 and 6 were unused in MPC-HC's key list. The TV Settings panel
 ends with **Exit** (closes the player, as File > Exit) under "Switch to Desktop Mode". In TV Mode with no
-file loaded, a click on the empty player (the logo) opens a file (File > Quick Open).
+file loaded, a click on the empty player (the logo) opens the last file from MPC-HC's recent files;
+with no recent file (or history off) it opens File > Quick Open.
 
 - **Back with nothing open** (Esc, Backspace, Browser Back or the extra Back key): TV option Control bar
   > "Back with nothing open": **Opens the power menu** (default; Exit, Enter / Exit fullscreen, Restart
@@ -368,7 +374,7 @@ turn Options > Player > History > "Remember File position" off afterwards, or bo
 
 ## 8. Draft text for the GitHub release
 
-> **MPC-HC TV mode 2.8.5-tv.1** (fork of MPC-HC 2.8.5)
+> **MPC-HC 2.8.5 TV 0.1.0** (fork of MPC-HC 2.8.5)
 >
 > A remote-friendly TV mode for MPC-HC: control bar, Emby / Jellyfin-style audio and subtitle lists,
 > video / audio info panels, a madVR settings panel, LAV decoder pages, and a TV settings menu, all
@@ -383,5 +389,5 @@ turn Options > Player > History > "Remember File position" off afterwards, or bo
 > - The installer can apply recommended TV settings (note: it turns on "remember file position"; turn
 >   it off if your media server handles resume).
 >
-> Source: this repository, tag `2.8.5-tv.1`. Licence: GPL-3.0 (MPC-HC). Not affiliated with MPC-HC,
+> Source: this repository, tag `2.8.5-tv-0.1.0`. Licence: GPL-3.0 (MPC-HC). Not affiliated with MPC-HC,
 > madVR Labs, Emby or Jellyfin.

@@ -208,6 +208,7 @@ private:
     std::vector<std::pair<RECT, int>> m_hitMadVrParts; // mouse: parts of the edited row
     std::vector<int> MadVrParts(int row) const;
     void StartMadVrEdit();
+    void ToggleMadVrOnOff();   // the focused madVR on / off + value row: flips the on / off (OK, a click)
     void EndMadVrEdit();
     void MadVrEditStep(int dir);
     void MoveColumn(int dir);

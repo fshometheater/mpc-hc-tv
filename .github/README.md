@@ -117,8 +117,8 @@ and web interface are unchanged.
    layout, fullscreen on open, the dark theme, the TV logo, the TV subtitle style and *Resume the last
    file on start*. It also turns on MPC-HC's *remember file position*; if a media server handles
    resume, untick the box or switch that option off afterwards.
-3. Turn TV Mode on or off any time: start with `/tv`, View > TV Mode, or View > Presets > **TV** (key 5)
-   / **TV Minimal** (key 6, borderless).
+3. TV Mode stays on from then on. To switch it off or on: View > TV Mode, or View > Presets > **TV**
+   (key 5) / **TV Minimal** (key 6, borderless).
 4. Open the control bar with **Down** (or the key you set), move with the arrows, OK selects, Back goes
    back.
 5. With no file loaded, a click on the player opens the last file from the recent files (a file picker
@@ -130,8 +130,8 @@ the madVR pages use **madVR 0.92.17 test build 210**
 [announcement](https://www.avsforum.com/posts/64465710/)); see the note at the top.
 
 ### Using it from a media server
-Set the media server's external player (Emby, Jellyfin and others) to `mpc-hc64.exe` with `/tv`.
-MPC-HC's web interface (port 13579, `/variables.html`) works as before, so scripts that read
+Set the media server's external player (Emby, Jellyfin and others) to `mpc-hc64.exe`; no extra
+arguments are needed. MPC-HC's web interface (port 13579, `/variables.html`) works as before, so scripts that read
 `position`, `duration` and `state` keep working.
 
 ### Updates

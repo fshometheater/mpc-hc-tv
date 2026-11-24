@@ -60,12 +60,16 @@ and web interface are unchanged.
 - Video and audio panels: badges (4K, HDR10, Dolby Vision, Atmos ...), source next to output, the
   display mode and HDR state, decoders, bitstreaming, and the HDMI signal on NVIDIA cards.
 - Three levels: Basic, Extended and Nightmare (everything MediaInfo knows).
+- Works for streams too: when a media server passes a web address instead of a file, the title and
+  MediaInfo details are read from the stream.
 
 ### Video, madVR and LAV
 - **Video page**: video renderer, madVR settings, LAV Video, pixel shaders. After changing the
   renderer, "Restart playback to apply" reopens the file at the same place with the same tracks.
-- **madVR panel**: picture (HDR, scaling refinement, smooth motion), display (calibration, display
-  modes, frame rate matching) and tools, edited live with a mini view so the picture stays visible.
+- **madVR panel**: picture (HDR, scaling refinement, smooth motion, trade quality for performance),
+  display (calibration, display modes, frame rate matching) and tools, edited live with a mini view so
+  the picture stays visible. On / off options are switches (OK or a click flips them); options with an
+  on / off and a value keep both on one row.
 - **LAV pages**: bitstreaming, DRC, output formats, hardware decoding, RGB levels, deinterlacing.
 
 ### TV options
@@ -74,8 +78,9 @@ and web interface are unchanged.
 - **Control bar**: when it shows (start, pause, mouse), what's on it, Hold OK, and what Back does when
   nothing is open.
 - **Seeking**: step, hold speed-up, smooth scrubbing, chapter snapping, MPC-HC's jump distances.
-- **Button / key mapping**: any key for any command, including holds (0.6 s) and the arrow keys, so a
-  remote with few buttons goes a long way. Set, Set hold and Clear work from the remote itself.
+- **Button / key mapping**: any key for any command, including holds (0.6 s, OK included) and the arrow
+  keys, so a remote with few buttons goes a long way. Set, Set hold, Edit and Clear work from the
+  remote itself; Edit shows a command's keys as tags so one can be removed and the others kept.
 - Menus wrap around, scroll smoothly with the mouse wheel, and skip options that don't apply.
 
 <p>
@@ -111,6 +116,8 @@ and web interface are unchanged.
    / **TV Minimal** (key 6, borderless).
 4. Open the control bar with **Down** (or the key you set), move with the arrows, OK selects, Back goes
    back.
+5. With no file loaded, a click on the player opens the last file from the recent files (a file picker
+   if there is none).
 
 madVR is not included; install it the usual way and select it under Options > Playback > Output. For
 the madVR pages use **madVR 0.92.17 test build 210**

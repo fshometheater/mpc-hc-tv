@@ -217,12 +217,13 @@ display stays at a high refresh rate (e.g. 120 Hz) during playback.
 
 - **Installer**: normal MPC-HC setup plus the TV option box (section 6). The box is ticked by default,
   upgrades included: untick it when upgrading to keep your current settings (a silent install applies it).
-- **Zip / portable**: unpack, run `mpc-hc64.exe`. Turn TV mode on with View > TV Mode, View > Presets >
-  TV, or start with `/tv`. Nothing is changed automatically.
+- **Zip / portable**: unpack, run `mpc-hc64.exe`. Turn TV mode on once with View > TV Mode or View >
+  Presets > TV; it stays on. Nothing else is changed automatically.
 - **madVR is not included.** Install it separately and pick it in Options > Playback > Output (or add
   it under External Filters). Without madVR the overlay uses its own window.
-- **External players (Emby Theater, Kodi, etc.)**: point the external player at `mpc-hc64.exe` and add
-  `/tv` (and usually `/fullscreen`). The web interface works as in stock MPC-HC.
+- **External players (Emby Theater, Kodi, etc.)**: point the external player at `mpc-hc64.exe`; no extra
+  arguments are needed (TV Mode and fullscreen come from the player's own settings). `/tv` still forces
+  TV Mode for a player that isn't set up for it. The web interface works as in stock MPC-HC.
 - Back up first when replacing an existing player: copy its folder and export
   `HKCU\Software\MPC-HC\MPC-HC` (or copy `mpc-hc64.ini`).
 - **Copy the whole folder, not just `mpc-hc64.exe`.** `MediaInfo.dll` (Info panels, Properties >
@@ -392,7 +393,7 @@ turn Options > Player > History > "Remember File position" (or TV options > Play
 > A remote-friendly TV mode for MPC-HC: control bar, Emby / Jellyfin-style audio and subtitle lists,
 > video / audio info panels, a madVR settings panel, LAV decoder pages, and a TV settings menu, all
 > usable with arrows, OK and Back. Desktop use is unchanged; switch TV mode on with View > TV Mode,
-> View > Presets > TV, or `/tv`.
+> View > Presets > TV (on by default with the installer's recommended TV settings).
 >
 > - Works with any renderer. The overlay is drawn in its own window by default (smoothest animation);
 >   with madVR it can be drawn inside madVR instead (TV options > Appearance), best for HDR passthrough.

@@ -29,6 +29,7 @@
 #include "LAVFilters/src/include/LAVAudioSettings.h"
 #include <mvrInterfaces.h>
 #include <dxgi1_6.h>
+#include <wininet.h>
 #include <atomic>
 #include <map>
 #include <memory>
@@ -140,6 +141,131 @@ namespace
         (void)sec;
     }
 
+    bool IsWebAddress(const CStringW& path)
+    {
+        return path.Left(7).CompareNoCase(L"http://") == 0 || path.Left(8).CompareNoCase(L"https://") == 0;
+    }
+
+    // What may be shown on screen of a path or address: no query string (a media server's stream
+    // address carries its access key there)
+    CStringW WithoutQuery(const CStringW& path)
+    {
+        const int q = path.FindOneOf(L"?#");
+        return q > 0 ? path.Left(q) : path;
+    }
+
+    // A media server (e.g. Emby) may hand the player a stream address instead of a file path, and
+    // MPC-HC's MediaInfo.dll can't open web addresses. So the file is read here in pieces with HTTP
+    // range requests and given to MediaInfo, which says where to read next. Limits keep it light on
+    // the server: 1 MB pieces, at most 64 MB and 256 requests.
+    bool OpenFromWeb(MediaInfoDLL::MediaInfo& mi, const CStringW& url, CStringW& error)
+    {
+        constexpr DWORD kChunk = 1u << 20;
+        constexpr ULONGLONG kMaxBytes = 64ull << 20;
+        constexpr int kMaxRequests = 256;
+        HINTERNET net = InternetOpenW(L"MPC-HC TV", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
+        if (!net) {
+            error = L"MediaInfo: no network access for " + WithoutQuery(url);
+            return false;
+        }
+        DWORD timeout = 8000;
+        InternetSetOptionW(net, INTERNET_OPTION_CONNECT_TIMEOUT, &timeout, sizeof(timeout));
+        InternetSetOptionW(net, INTERNET_OPTION_RECEIVE_TIMEOUT, &timeout, sizeof(timeout));
+
+        std::vector<BYTE> buf(kChunk);
+        ULONGLONG total = 0;
+        // Reads up to kChunk bytes from `from` into buf; false if the server can't do that
+        auto readAt = [&](ULONGLONG from, DWORD& got) -> bool {
+            got = 0;
+            wchar_t range[80];
+            swprintf_s(range, L"Range: bytes=%llu-%llu\r\n", from, from + kChunk - 1);
+            HINTERNET f = InternetOpenUrlW(net, url, range, static_cast<DWORD>(-1),
+                                           INTERNET_FLAG_RELOAD | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_UI, 0);
+            if (!f) {
+                return false;
+            }
+            DWORD status = 0, len = sizeof(status);
+            HttpQueryInfoW(f, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &len, nullptr);
+            bool ok = status == 206 || (status == 200 && from == 0); // 200 later = the server ignores ranges
+            if (ok && total == 0) {
+                wchar_t text[128] = {};
+                len = sizeof(text);
+                if (status == 206 && HttpQueryInfoW(f, HTTP_QUERY_CONTENT_RANGE, text, &len, nullptr)) {
+                    if (const wchar_t* slash = wcsrchr(text, L'/')) {
+                        total = _wcstoui64(slash + 1, nullptr, 10); // "bytes 0-1048575/12345678"
+                    }
+                } else if (len = sizeof(text); HttpQueryInfoW(f, HTTP_QUERY_CONTENT_LENGTH, text, &len, nullptr)) {
+                    total = _wcstoui64(text, nullptr, 10);
+                }
+            }
+            while (ok && got < kChunk) {
+                DWORD n = 0;
+                if (!InternetReadFile(f, buf.data() + got, kChunk - got, &n) || n == 0) {
+                    break;
+                }
+                got += n;
+            }
+            InternetCloseHandle(f);
+            return ok && got > 0;
+        };
+
+        DWORD got = 0;
+        if (!readAt(0, got)) {
+            InternetCloseHandle(net);
+            error = L"MediaInfo could not read the stream " + WithoutQuery(url);
+            return false;
+        }
+        const MediaInfo_int64u size = total ? total : static_cast<MediaInfo_int64u>(-1);
+        mi.Open_Buffer_Init(size, 0);
+        ULONGLONG pos = 0, read = got;
+        int requests = 1;
+        for (;;) {
+            const size_t state = mi.Open_Buffer_Continue(buf.data(), got);
+            if (state & 0x08) {
+                break; // MediaInfo has what it needs
+            }
+            const MediaInfo_int64u jump = mi.Open_Buffer_Continue_GoTo_Get();
+            if (jump != static_cast<MediaInfo_int64u>(-1)) {
+                pos = jump;
+                mi.Open_Buffer_Init(size, pos); // it wants another part of the file
+            } else {
+                pos += got;
+            }
+            if ((total && pos >= total) || read >= kMaxBytes || requests >= kMaxRequests || !readAt(pos, got)) {
+                break;
+            }
+            read += got;
+            requests++;
+        }
+        mi.Open_Buffer_Finalize();
+        InternetCloseHandle(net);
+        return true;
+    }
+
+    // The file's name for showing: no folders, no query string, %20 etc. decoded, no extension
+    // (a web address shows only its last path part, never the server or an access key)
+    CStringW DisplayName(const CStringW& path)
+    {
+        CStringW name = WithoutQuery(path);
+        name = name.Mid(std::max(name.ReverseFind(L'\\'), name.ReverseFind(L'/')) + 1);
+        if (name.Find(L'%') >= 0) {
+            DWORD n = name.GetLength() + 1;
+            CStringW out;
+            if (SUCCEEDED(UrlUnescapeW(name.GetBuffer(), out.GetBuffer(n), &n, 0))) {
+                out.ReleaseBuffer();
+                name.ReleaseBuffer();
+                name = out;
+            } else {
+                out.ReleaseBuffer(0);
+                name.ReleaseBuffer();
+            }
+        }
+        if (name.ReverseFind(L'.') > 0) {
+            name = name.Left(name.ReverseFind(L'.'));
+        }
+        return name;
+    }
+
     void RunMediaInfo(std::shared_ptr<MiJob> job)
     {
         SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL); // never compete with playback
@@ -157,9 +283,12 @@ namespace
         } else {
             mi.Option(L"ParseSpeed", L"0.5");
             mi.Option(L"Complete", L"1");
-            if (mi.Open(std::wstring(job->path.GetString())) == 0) {
-                // with the path, so a launcher's way of passing the file (a URL, a mapped share) is visible
-                job->snap.error = L"MediaInfo could not read " + job->path;
+            const bool web = IsWebAddress(job->path);
+            CStringW webError;
+            if (web ? !OpenFromWeb(mi, job->path, webError) : mi.Open(std::wstring(job->path.GetString())) == 0) {
+                // with the path, so a launcher's way of passing the file (a URL, a mapped share) is visible;
+                // a web address without its query string (it can carry an access key)
+                job->snap.error = web ? webError : L"MediaInfo could not read " + job->path;
             } else {
                 std::vector<MiStream> general;
                 ReadStreams(mi, MediaInfoDLL::Stream_General, general);
@@ -715,13 +844,10 @@ void CTvInfo::BuildBadges(CMainFrame* pMainFrame, Kind kind, std::vector<TvInfoB
 
 CStringW CTvInfo::FileLine(CMainFrame* pMainFrame)
 {
-    CStringW path = pMainFrame->m_wndPlaylistBar.GetCurFileName();
-    CStringW name = path.Mid(path.ReverseFind(L'\\') + 1);
-    const int dot = name.ReverseFind(L'.');
-    if (dot > 0) {
-        name = name.Left(dot);
-    }
+    const CStringW path = pMainFrame->m_wndPlaylistBar.GetCurFileName();
     const MiSnapshot* snap = Snapshot(path);
+    // the title tag when the file has one (a stream address only has a generic name), else the file name
+    const CStringW name = MediaTitle(pMainFrame);
     const CStringW dur = snap ? snap->general.Text(L"Duration") : CStringW();
     return dur.IsEmpty() ? name : name + kDot + dur;
 }
@@ -921,26 +1047,7 @@ CStringW CTvInfo::MediaTitle(CMainFrame* pMainFrame)
             }
         }
     }
-    CStringW name = path.Mid(std::max(path.ReverseFind(L'\\'), path.ReverseFind(L'/')) + 1);
-    const int q = name.FindOneOf(L"?#");
-    if (q > 0) {
-        name = name.Left(q);
-    }
-    if (name.Find(L'%') >= 0) {
-        DWORD n = name.GetLength() + 1;
-        CStringW out;
-        if (SUCCEEDED(UrlUnescapeW(name.GetBuffer(), out.GetBuffer(n), &n, 0))) {
-            out.ReleaseBuffer();
-            name = out;
-        } else {
-            out.ReleaseBuffer(0);
-        }
-        name.ReleaseBuffer();
-    }
-    if (name.ReverseFind(L'.') > 0) {
-        name = name.Left(name.ReverseFind(L'.'));
-    }
-    return name;
+    return DisplayName(path);
 }
 
 void CTvInfo::HdrMetadata(CMainFrame* pMainFrame, CStringW& format, CStringW& maxCll, CStringW& maxFall, CStringW& mastering)

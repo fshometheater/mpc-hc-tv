@@ -2795,6 +2795,14 @@ bool CTvMenu::MadVrClick(int row, POINT pt)
     if (m_page != Page::MadVR || row < 0 || row >= static_cast<int>(m_rows.size()) || m_rows[row].kind != RowKind::MadVrSetting) {
         return false;
     }
+    if (m_rows[row].toggle >= 0) {
+        // a plain on / off (a switch): a click anywhere on the row flips it, as OK does
+        if (!m_rows[row].faded) {
+            m_nFocus = row;
+            Activate();
+        }
+        return true;
+    }
     if (row != m_nFocus || m_nMadVrPart < 0) {
         m_nFocus = row;
         StartMadVrEdit();

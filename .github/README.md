@@ -27,6 +27,13 @@ and web interface are unchanged.
 > **Development build.** This is an early version (0.1.0). Settings and behaviour may still change
 > between builds. Feedback and bug reports are welcome in the Issues.
 
+> **madVR:** TV Mode's madVR pages were made and tested with **madVR 0.92.17 test build 210**
+> (madshi's HDR measurement build):
+> [announcement on AVS Forum](https://www.avsforum.com/posts/64465710/) ·
+> [download (madVRhdrMeasure210.zip)](https://madshi.net/madVRhdrMeasure210.zip).
+> The standard 0.92.17 release may store some settings differently, so not every madVR option may show
+> or work with it. Everything else in TV Mode works with any renderer.
+
 ![Control bar](../docs/screenshots/control-bar.png)
 
 ## Features
@@ -105,7 +112,10 @@ and web interface are unchanged.
 4. Open the control bar with **Down** (or the key you set), move with the arrows, OK selects, Back goes
    back.
 
-madVR is not included; install it the usual way and select it under Options > Playback > Output.
+madVR is not included; install it the usual way and select it under Options > Playback > Output. For
+the madVR pages use **madVR 0.92.17 test build 210**
+([download](https://madshi.net/madVRhdrMeasure210.zip),
+[announcement](https://www.avsforum.com/posts/64465710/)); see the note at the top.
 
 ### Using it from a media server
 Set the media server's external player (Emby, Jellyfin and others) to `mpc-hc64.exe` with `/tv`.

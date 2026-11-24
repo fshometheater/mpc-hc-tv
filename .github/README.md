@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="../docs/screenshots/logo.png" alt="MPC-HC TV" width="440">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../docs/screenshots/logo-dark.png">
+    <img src="../docs/screenshots/logo-light.png" alt="MPC-HC TV" width="440">
+  </picture>
 </p>
 
 <p align="center">
